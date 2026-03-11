@@ -1,15 +1,15 @@
 services:
-  account_service_database:
+  fiagram_mysql:
     image: mysql:9.5.0
-    container_name: account_service_database-0
+    container_name: fiagram_mysql-0
     restart: always
     ports:
       - "11000:3306"
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: db_account_service
+      MYSQL_DATABASE: fiagram
     volumes:
-      - account_service_mysql_data:/var/lib/mysql
+      - fiagram_mysql_data:/var/lib/mysql
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -24,21 +24,28 @@ services:
       retries: 20
       start_period: 20s
 
-  account_service:
-    image: fiagram_account_service:0.0.0
-    container_name: account_service-0
+  fiagram_redis:
+    image: redis:8.4.0
+    container_name: fiagram_redis-0
+    restart: always
+
+  fiagram_standalone:
+    image: fiagram_standalone:0.0.0
+    container_name: fiagram_standalone-0
     restart: always
     ports:
       - "11001:11001"
     volumes:
-      - ./configs:/home:ro
-    command: /account_service -c /home/test.yaml
+      - ./configs/test.yaml:/home/test.yaml:ro
+    command: /standalone -c /home/test.yaml
     depends_on:
-      account_service_database:
+      fiagram_mysql:
         condition: service_healthy
+      fiagram_redis:
+        condition: service_started
 
 volumes:
-  account_service_mysql_data:
+  fiagram_mysql_data:
 
 networks:
   default:

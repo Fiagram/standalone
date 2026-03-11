@@ -1,6 +1,6 @@
 http:
   address: 0.0.0.0
-  port: 8080
+  port: 11001
 
 auth:
   domain: localhost
@@ -12,20 +12,20 @@ auth:
     refreshTokenTTL: 24h
     refreshTokenLongTTL: 720h
 
-database:
+log:
+  level: debug
+
+database_client:
   type: mysql
-  host: 127.0.0.1
+  address: fiagram_mysql-0
   port: 3306
   username: root
   password: root
-  name: db_fiagram
+  database: fiagram
 
-cache:
+cache_client:
   type: redis
-  address: 127.0.0.1
+  address: fiagram_redis-0
   port: 6379
   username:
   password:
-
-log:
-  level: debug

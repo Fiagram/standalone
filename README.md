@@ -15,11 +15,11 @@
 - [x] Integrate FX framework
 - [x] Add middleware layers to http server
 - [x] Implement `users` methods use middleware in gin framework
-- [ ] Complete `users` CRUD methods
+- [x] Complete `users` CRUD methods
 - [ ] Deploy the the system to a real domain (fiagram.io.vn)
 - [x] Integrate mock framework for automation testing
 - [x] Fixbug SQL injection when querying database directly
-- [ ] Apply Docker for production releases
+- [x] Apply Docker for production releases
 - [ ] (Tech debt) Fork and rewrite openapi to add `RegisterWith<middleware_names>Mids` intent to group middlewares for convenience
 
 # Introduction
