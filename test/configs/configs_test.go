@@ -1,0 +1,57 @@
+package configs_test
+
+import (
+	"log"
+	"os"
+	"testing"
+	"time"
+
+	"github.com/Fiagram/standalone/internal/configs"
+	"github.com/stretchr/testify/require"
+)
+
+var config configs.Config
+
+func TestMain(m *testing.M) {
+	cfg, err := configs.NewConfig("")
+	if err != nil {
+		log.Fatal("failed to init config default")
+	}
+	config = cfg
+	os.Exit(m.Run())
+}
+
+func TestAuth(t *testing.T) {
+	require.Equal(t, 24*time.Hour, config.Auth.Token.RefreshTokenTTL)
+	require.Equal(t, 15*time.Minute, config.Auth.Token.AccessTokenTTL)
+	require.Equal(t, "localhost", config.Auth.Domain)
+	require.Equal(t, "secret_token_in_here", config.Auth.Token.Secret)
+	require.Equal(t, 720*time.Hour, config.Auth.Token.RefreshTokenLongTTL)
+	require.Equal(t, 10, config.Auth.Hash.Cost)
+}
+
+func TestHttp(t *testing.T) {
+	require.Equal(t, "0.0.0.0", config.Http.Address)
+	require.Equal(t, "8080", config.Http.Port)
+}
+
+func TestLog(t *testing.T) {
+	require.Equal(t, "debug", config.Log.Level)
+}
+
+func TestCacheClient(t *testing.T) {
+	require.Equal(t, "redis", string(config.CacheClient.Type))
+	require.Equal(t, "127.0.0.1", config.CacheClient.Address)
+	require.Equal(t, "6379", config.CacheClient.Port)
+	require.Equal(t, "", config.CacheClient.Username)
+	require.Equal(t, "", config.CacheClient.Password)
+}
+
+func TestDatabaseClient(t *testing.T) {
+	require.Equal(t, "mysql", string(config.DatabaseClient.Type))
+	require.Equal(t, "127.0.0.1", config.DatabaseClient.Address)
+	require.Equal(t, 3306, config.DatabaseClient.Port)
+	require.Equal(t, "root", config.DatabaseClient.Username)
+	require.Equal(t, "root", config.DatabaseClient.Password)
+	require.Equal(t, "fiagram", config.DatabaseClient.Database)
+}

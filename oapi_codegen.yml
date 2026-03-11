@@ -1,0 +1,5 @@
+package: oapi
+output: internal/generated/openapi/oapi.gen.go
+generate:
+  - types
+  - gin

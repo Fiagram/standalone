@@ -1,0 +1,388 @@
+openapi: "3.0.0"
+info:
+  title: The Fiagram API
+  description: The REST Full API specification for the Fiagram project
+  version: 0.0.0
+servers:
+  - url: http://fiagram.com/api/v1
+    description: Production server
+
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: Users
+    description: User profile endpoints
+
+security:
+  - bearerAuth: []
+
+paths:
+  # -------------------------------- Auth
+  /auth/signup:
+    post:
+      tags: [Auth]
+      summary: Sign up a new account
+      operationId: signUp
+      description: |
+        Sign up account with user information
+      security: [] # public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "201":
+          description: Account created
+          headers:
+            Set-Cookie:
+              description: |
+                Sets `refresh_token=<opaque>; HttpOnly; Secure; Path=/api/v1/auth/token; SameSite=Lax`.
+              schema:
+                type: string
+                pattern: "^refresh_token="
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupResponse"
+
+        "500": { $ref: "#/components/responses/InternalServerError" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /auth/signin:
+    post:
+      tags: [Auth]
+      summary: Sign in
+      description: |
+        Validates credentials, sets refresh token to cookie, returns access token in body.
+      operationId: signIn
+      security: [] # public endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SigninRequest"
+      responses:
+        "200":
+          description: Signed in successfully
+          headers:
+            Set-Cookie:
+              description: |
+                Sets `refresh_token=<opaque>; HttpOnly; Secure; Path=/api/v1/auth/token; SameSite=Lax`.
+              schema:
+                type: string
+                pattern: "^refresh_token="
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SigninResponse"
+        "500": { $ref: "#/components/responses/InternalServerError" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /auth/token/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token using refresh token
+      description: |
+        Use a refresh token to obtain a new access token. Server MAY rotate refresh tokens.
+        Refresh token can be provided via HttpOnly cookie.
+      operationId: refreshToken
+      security:
+        - RefreshTokenCookie: []
+      responses:
+        "200":
+          description: Tokens refreshed
+          headers:
+            Set-Cookie:
+              description: |
+                Sets `refresh_token=<opaque>; HttpOnly; Secure; Path=/api/v1/auth/token; SameSite=Lax`.
+              schema:
+                type: string
+                pattern: "^refresh_token="
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RefreshResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /auth/token/signout:
+    post:
+      tags: [Auth]
+      summary: Sign out and revoke refresh token
+      description: >
+        Revokes the `refresh_token`. If `refresh_token` is stored in cookie,
+        this endpoint should also clear it.
+      operationId: signOut
+      security:
+        - RefreshTokenCookie: []
+      responses:
+        "204":
+          description: Signed out successfully
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  # -------------------------------- Users
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user information
+      operationId: getMe
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersMeResponse"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    RefreshTokenCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Max items to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: Items to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+  responses:
+    # Ref: https://restfulapi.net/http-status-codes/
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Forbidden:
+      description: Missing or invalid authentication
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    TooManyRequests:
+      description: Sent too many request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    # -------------------------------- Auth
+    ErrorResponse:
+      type: object
+      additionalProperties: false
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: UNAUTHORIZED
+        message:
+          type: string
+          example: Unauthorized
+        details:
+          type: object
+          additionalProperties: true
+
+    Password:
+      type: string
+      format: password
+      writeOnly: true
+      minLength: 8
+      maxLength: 72
+      description: 8-72 characters, including at least one uppercase,
+        one lowercase, one digit, and one special character; no whitespace.
+      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,72}$'
+      example: Str0ngPassw0rd!
+
+    Username:
+      type: string
+      minLength: 5
+      maxLength: 20
+      description: |
+        3–20 characters; letters and numbers required;
+        optional single dots or underscores allowed between characters;
+        cannot start or end with dot/underscore; no consecutive dots or underscores.
+      pattern: "^(?=.{3,20}$)(?!.*[_.]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$"
+      example: member1
+
+    Fullname:
+      type: string
+      minLength: 5
+      maxLength: 200
+      example: Nguyễn Vũ Hoàng Anh
+
+    Email:
+      type: string
+      pattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+      example: user1@example.com
+
+    PhoneNumber:
+      type: object
+      description: Abide by the E.164 standard
+      properties:
+        countryCode:
+          type: string
+          pattern: '^\+\d{1,3}$'
+          example: "+84"
+        number:
+          type: string
+          pattern: '^\d{6,12}$'
+          example: "909234567"
+
+    Role:
+      type: string
+      enum:
+        - none
+        - admin
+        - member
+      example: member
+      default: member
+
+    Account:
+      type: object
+      required: [username, email, role, fullname]
+      properties:
+        username:
+          $ref: "#/components/schemas/Username"
+        fullname:
+          $ref: "#/components/schemas/Fullname"
+        email:
+          $ref: "#/components/schemas/Email"
+        phoneNumber:
+          $ref: "#/components/schemas/PhoneNumber"
+        role:
+          $ref: "#/components/schemas/Role"
+
+    SignupRequest:
+      type: object
+      required: [account, password]
+      properties:
+        account:
+          $ref: "#/components/schemas/Account"
+        password:
+          $ref: "#/components/schemas/Password"
+
+    AccessTokenResponse:
+      type: object
+      additionalProperties: false
+      required: [token, exp]
+      properties:
+        token:
+          type: string
+          description: JWT access token (store in memory; avoid localStorage if possible)
+          example: eyJhbGciOi...
+        exp:
+          type: integer
+          format: int64
+          minimum: 1
+          description: >
+            Unix timestamp (seconds since epoch) when the access token expires.
+          example: 1706812800
+
+    SignupResponse:
+      type: object
+      additionalProperties: false
+      required: [accessToken]
+      properties:
+        accessToken:
+          $ref: "#/components/schemas/AccessTokenResponse"
+
+    SigninRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username:
+          $ref: "#/components/schemas/Username"
+        password:
+          $ref: "#/components/schemas/Password"
+        isRememberMe:
+          type: boolean
+          default: false
+          description: If true, server may issue longer refresh token lifetime.
+
+    SigninResponse:
+      type: object
+      additionalProperties: false
+      required: [accessToken]
+      properties:
+        accessToken:
+          $ref: "#/components/schemas/AccessTokenResponse"
+
+    RefreshResponse:
+      type: object
+      additionalProperties: false
+      required: [accessToken]
+      properties:
+        accessToken:
+          $ref: "#/components/schemas/AccessTokenResponse"
+
+    # -------------------------------- Users
+    UsersMeResponse:
+      type: object
+      additionalProperties: false
+      required: [account]
+      properties:
+        account:
+          $ref: "#/components/schemas/Account"

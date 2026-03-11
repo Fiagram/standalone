@@ -1,0 +1,31 @@
+http:
+  address: 0.0.0.0
+  port: 8080
+
+auth:
+  domain: localhost
+  hash:
+    cost: 10
+  token:
+    secret: secret_token_in_here
+    accessTokenTTL: 15m
+    refreshTokenTTL: 24h
+    refreshTokenLongTTL: 720h
+
+log:
+  level: debug
+
+database_client:
+  type: mysql
+  address: "127.0.0.1"
+  port: 3306
+  username: root
+  password: root
+  database: fiagram
+
+cache_client:
+  type: redis
+  address: "127.0.0.1"
+  port: 6379
+  username:
+  password:
