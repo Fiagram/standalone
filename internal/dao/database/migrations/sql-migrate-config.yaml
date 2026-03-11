@@ -1,6 +1,6 @@
 development:
   dialect: mysql
-  datasource: root:root@tcp(localhost:3330)/db_account_service?parseTime=true
+  datasource: root:root@tcp(localhost:3306)/fiagram?parseTime=true
   dir: internal/dataaccess/database/migrations/mysql
   table: migrations
 

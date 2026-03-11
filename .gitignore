@@ -29,6 +29,3 @@ mysql_data/
 
 # Downloaded file location in development
 downloads
-
-# Visual studio code
-.vscode/*
