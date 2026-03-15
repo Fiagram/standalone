@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"time"
 
 	"github.com/Fiagram/standalone/internal/configs"
 	"github.com/Fiagram/standalone/internal/handler/middlewares"
@@ -48,15 +47,16 @@ func (s *httpServer) Start(ctx context.Context) error {
 	logger := logger.LoggerWithContext(ctx, s.logger)
 
 	r := gin.Default()
-	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{"http://localhost:3000"},
-		AllowMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		// AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
-		AllowHeaders:     []string{"*"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
+	if s.httpConfig.CORS.IsEnable {
+		r.Use(cors.New(cors.Config{
+			AllowOrigins:     s.httpConfig.CORS.AllowOrigins,
+			AllowMethods:     s.httpConfig.CORS.AllowMethods,
+			AllowHeaders:     s.httpConfig.CORS.AllowHeaders,
+			ExposeHeaders:    s.httpConfig.CORS.ExposeHeaders,
+			AllowCredentials: s.httpConfig.CORS.AllowCredentials,
+			MaxAge:           s.httpConfig.CORS.MaxAge,
+		}))
+	}
 
 	public := r.Group("/api/v1")
 	public.POST("/auth/signup", s.authLogic.SignUp)

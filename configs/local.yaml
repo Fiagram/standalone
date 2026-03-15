@@ -1,6 +1,27 @@
 http:
   address: 0.0.0.0
   port: 8080
+  CORS:
+    isEnable: true
+    allowOrigins:
+      - "http://localhost:3000"
+      - "https://fiagram.io.vn"
+      - "https://app.fiagram.io.vn"
+    allowMethods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowHeaders:
+      - Origin
+      - Content-Type
+      - Authorization
+    exposeHeaders:
+      - Content-Length
+    allowCredentials: true
+    maxAge: 12h
 
 auth:
   domain: localhost

@@ -33,6 +33,19 @@ func TestAuth(t *testing.T) {
 func TestHttp(t *testing.T) {
 	require.Equal(t, "0.0.0.0", config.Http.Address)
 	require.Equal(t, "8080", config.Http.Port)
+
+	cors := config.Http.CORS
+	require.True(t, cors.IsEnable)
+	require.Equal(t, []string{
+		"http://localhost:3000",
+		"https://fiagram.io.vn",
+		"https://app.fiagram.io.vn",
+	}, cors.AllowOrigins)
+	require.Equal(t, []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}, cors.AllowMethods)
+	require.Equal(t, []string{"Origin", "Content-Type", "Authorization"}, cors.AllowHeaders)
+	require.Equal(t, []string{"Content-Length"}, cors.ExposeHeaders)
+	require.True(t, cors.AllowCredentials)
+	require.Equal(t, 12*time.Hour, cors.MaxAge)
 }
 
 func TestLog(t *testing.T) {
