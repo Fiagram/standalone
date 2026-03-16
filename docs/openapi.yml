@@ -250,7 +250,8 @@ components:
       writeOnly: true
       minLength: 8
       maxLength: 72
-      description: 8-72 characters, including at least one uppercase,
+      description: |
+        8-72 characters, including at least one uppercase,
         one lowercase, one digit, and one special character; no whitespace.
       pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,72}$'
       example: Str0ngPassw0rd!
@@ -260,10 +261,10 @@ components:
       minLength: 5
       maxLength: 20
       description: |
-        3–20 characters; letters and numbers required;
+        5–20 characters; letters and numbers required;
         optional single dots or underscores allowed between characters;
         cannot start or end with dot/underscore; no consecutive dots or underscores.
-      pattern: "^(?=.{3,20}$)(?!.*[_.]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$"
+      pattern: "^(?=.{5,20}$)(?!.*[_.]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$"
       example: member1
 
     Fullname:
@@ -343,8 +344,10 @@ components:
     SignupResponse:
       type: object
       additionalProperties: false
-      required: [accessToken]
+      required: [account, accessToken]
       properties:
+        account:
+          $ref: "#/components/schemas/Account"
         accessToken:
           $ref: "#/components/schemas/AccessTokenResponse"
 
@@ -365,8 +368,10 @@ components:
     SigninResponse:
       type: object
       additionalProperties: false
-      required: [accessToken]
+      required: [account, accessToken]
       properties:
+        account:
+          $ref: "#/components/schemas/Account"
         accessToken:
           $ref: "#/components/schemas/AccessTokenResponse"
 
