@@ -51,7 +51,7 @@ type Account struct {
 	PhoneNumber *PhoneNumber `json:"phoneNumber,omitempty"`
 	Role        Role         `json:"role"`
 
-	// Username 3–20 characters; letters and numbers required;
+	// Username 5–20 characters; letters and numbers required;
 	// optional single dots or underscores allowed between characters;
 	// cannot start or end with dot/underscore; no consecutive dots or underscores.
 	Username Username `json:"username"`
@@ -70,7 +70,8 @@ type ErrorResponse struct {
 // Fullname defines model for Fullname.
 type Fullname = string
 
-// Password 8-72 characters, including at least one uppercase, one lowercase, one digit, and one special character; no whitespace.
+// Password 8-72 characters, including at least one uppercase,
+// one lowercase, one digit, and one special character; no whitespace.
 type Password = string
 
 // PhoneNumber Abide by the E.164 standard
@@ -92,10 +93,11 @@ type SigninRequest struct {
 	// IsRememberMe If true, server may issue longer refresh token lifetime.
 	IsRememberMe *bool `json:"isRememberMe,omitempty"`
 
-	// Password 8-72 characters, including at least one uppercase, one lowercase, one digit, and one special character; no whitespace.
+	// Password 8-72 characters, including at least one uppercase,
+	// one lowercase, one digit, and one special character; no whitespace.
 	Password *Password `json:"password,omitempty"`
 
-	// Username 3–20 characters; letters and numbers required;
+	// Username 5–20 characters; letters and numbers required;
 	// optional single dots or underscores allowed between characters;
 	// cannot start or end with dot/underscore; no consecutive dots or underscores.
 	Username Username `json:"username"`
@@ -104,22 +106,25 @@ type SigninRequest struct {
 // SigninResponse defines model for SigninResponse.
 type SigninResponse struct {
 	AccessToken AccessTokenResponse `json:"accessToken"`
+	Account     Account             `json:"account"`
 }
 
 // SignupRequest defines model for SignupRequest.
 type SignupRequest struct {
 	Account Account `json:"account"`
 
-	// Password 8-72 characters, including at least one uppercase, one lowercase, one digit, and one special character; no whitespace.
+	// Password 8-72 characters, including at least one uppercase,
+	// one lowercase, one digit, and one special character; no whitespace.
 	Password *Password `json:"password,omitempty"`
 }
 
 // SignupResponse defines model for SignupResponse.
 type SignupResponse struct {
 	AccessToken AccessTokenResponse `json:"accessToken"`
+	Account     Account             `json:"account"`
 }
 
-// Username 3–20 characters; letters and numbers required;
+// Username 5–20 characters; letters and numbers required;
 // optional single dots or underscores allowed between characters;
 // cannot start or end with dot/underscore; no consecutive dots or underscores.
 type Username = string

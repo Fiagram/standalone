@@ -57,7 +57,7 @@ func (o *authLogic) RefreshToken(c *gin.Context) {
 
 	// Extract refresh token from header
 	refreshToken, err := c.Cookie("refresh_token")
-	if err != nil || strings.TrimSpace(refreshToken) == "" {
+	if err != nil || refreshToken == "" {
 		errMsg := "refresh token is required"
 		logger.Error(errMsg)
 		c.JSON(http.StatusBadRequest, oapi.BadRequest{
@@ -127,7 +127,7 @@ func (o *authLogic) RefreshToken(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    newRefreshToken,
-		Path:     "/api/v1/auth/token",
+		Path:     "/",
 		Domain:   o.authConfig.Domain,
 		Expires:  newRefreshTokenExpiresAt,
 		MaxAge:   int(time.Until(newRefreshTokenExpiresAt).Seconds()),
@@ -161,8 +161,8 @@ func (o *authLogic) SignIn(c *gin.Context) {
 	}
 
 	// Verify data input is not empty
-	username := strings.TrimSpace(req.Username)
-	password := strings.TrimSpace(*req.Password)
+	username := req.Username
+	password := *req.Password
 	isRememberMe := *req.IsRememberMe
 	logger.With(zap.String("username", username))
 	if username == "" || password == "" {
@@ -193,6 +193,20 @@ func (o *authLogic) SignIn(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, oapi.Unauthorized{
 			Code:    "Unauthorized",
 			Message: "invalid username or password",
+		})
+		return
+	}
+
+	// Get account info
+	account, err := o.accountLogic.GetAccount(c, logic_account.GetAccountParams{
+		AccountId: validResp.AccountId,
+	})
+	if err != nil {
+		errMsg := "failed to get account info"
+		logger.With(zap.Error(err)).Error(errMsg)
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
 		})
 		return
 	}
@@ -244,7 +258,7 @@ func (o *authLogic) SignIn(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Path:     "/api/v1/auth/token",
+		Path:     "/",
 		Domain:   o.authConfig.Domain,
 		Expires:  refreshTokenExpiresAt,
 		MaxAge:   int(time.Until(refreshTokenExpiresAt).Seconds()),
@@ -254,10 +268,23 @@ func (o *authLogic) SignIn(c *gin.Context) {
 	})
 
 	// Return the access token to the response
+	phoneNumberRaw := account.AccountInfo.PhoneNumber
+	countryCode := strings.Split(phoneNumberRaw, " ")[0]
+	phoneNumber := strings.Split(phoneNumberRaw, " ")[1]
 	c.JSON(http.StatusOK, oapi.SigninResponse{
 		AccessToken: oapi.AccessTokenResponse{
 			Token: accessToken,
 			Exp:   accessTokenExpiresAt.Unix(),
+		},
+		Account: oapi.Account{
+			Username: username,
+			Fullname: account.AccountInfo.Fullname,
+			Email:    account.AccountInfo.Email,
+			PhoneNumber: &oapi.PhoneNumber{
+				CountryCode: utils.Ptr(countryCode),
+				Number:      utils.Ptr(phoneNumber),
+			},
+			Role: "member",
 		},
 	})
 }
@@ -267,7 +294,7 @@ func (o *authLogic) SignOut(c *gin.Context) {
 
 	// Extract refresh token from header
 	refreshToken, err := c.Cookie("refresh_token")
-	if err != nil || strings.TrimSpace(refreshToken) == "" {
+	if err != nil || refreshToken == "" {
 		errMsg := "refresh token is required"
 		logger.Error(errMsg)
 		c.JSON(http.StatusBadRequest, oapi.BadRequest{
@@ -293,7 +320,7 @@ func (o *authLogic) SignOut(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
-		Path:     "/api/v1/auth/token",
+		Path:     "/",
 		Domain:   o.authConfig.Domain,
 		MaxAge:   -1,
 		Secure:   true,
@@ -356,13 +383,13 @@ func (o *authLogic) SignUp(c *gin.Context) {
 	// Process the incoming request
 	accResp, err := o.accountLogic.CreateAccount(c, logic_account.CreateAccountParams{
 		AccountInfo: logic_account.AccountInfo{
-			Username:    strings.TrimSpace(username),
-			Fullname:    strings.TrimSpace(req.Account.Fullname),
-			Email:       strings.TrimSpace(req.Account.Email),
-			PhoneNumber: strings.TrimSpace(*req.Account.PhoneNumber.CountryCode + " " + *req.Account.PhoneNumber.Number),
+			Username:    username,
+			Fullname:    req.Account.Fullname,
+			Email:       req.Account.Email,
+			PhoneNumber: *req.Account.PhoneNumber.CountryCode + " " + *req.Account.PhoneNumber.Number,
 			Role:        2,
 		},
-		Password: strings.TrimSpace(*req.Password),
+		Password: *req.Password,
 	})
 	if err != nil || accResp.AccountId == 0 {
 		c.JSON(http.StatusBadRequest, oapi.BadRequest{
@@ -416,7 +443,7 @@ func (o *authLogic) SignUp(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Path:     "/api/v1/auth/token",
+		Path:     "/",
 		Domain:   o.authConfig.Domain,
 		Expires:  refreshTokenExpiresAt,
 		MaxAge:   int(time.Until(refreshTokenExpiresAt).Seconds()),
@@ -426,10 +453,20 @@ func (o *authLogic) SignUp(c *gin.Context) {
 	})
 
 	// Return the access token to the response
-	c.JSON(http.StatusOK, oapi.SigninResponse{
+	c.JSON(http.StatusOK, oapi.SignupResponse{
 		AccessToken: oapi.AccessTokenResponse{
 			Token: accessToken,
 			Exp:   accessTokenExpiresAt.Unix(),
+		},
+		Account: oapi.Account{
+			Username: username,
+			Fullname: req.Account.Fullname,
+			Email:    req.Account.Email,
+			PhoneNumber: &oapi.PhoneNumber{
+				CountryCode: req.Account.PhoneNumber.CountryCode,
+				Number:      req.Account.PhoneNumber.Number,
+			},
+			Role: "member",
 		},
 	})
 }
