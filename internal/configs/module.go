@@ -7,6 +7,8 @@ var Module = fx.Module(
 	fx.Provide(
 		NewConfig,
 		GetConfigHttp,
+		GetConfigHttpCORS,
+		GetConfigHttpCookie,
 		GetConfigLog,
 		GetConfigCacheClient,
 		GetConfigDatabaseClient,

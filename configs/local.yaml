@@ -22,9 +22,14 @@ http:
       - Content-Length
     allowCredentials: true
     maxAge: 12h
+  cookie:
+    domain: localhost
+    path: "/"
+    sameSite: none
+    secure: true
+    httpOnly: true
 
 auth:
-  domain: localhost
   hash:
     cost: 10
   token:

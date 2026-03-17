@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"net/http"
+
 	"github.com/Fiagram/standalone/internal/configs"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +26,6 @@ func TestMain(m *testing.M) {
 func TestAuth(t *testing.T) {
 	require.Equal(t, 24*time.Hour, config.Auth.Token.RefreshTokenTTL)
 	require.Equal(t, 15*time.Minute, config.Auth.Token.AccessTokenTTL)
-	require.Equal(t, "localhost", config.Auth.Domain)
 	require.Equal(t, "secret_token_in_here", config.Auth.Token.Secret)
 	require.Equal(t, 720*time.Hour, config.Auth.Token.RefreshTokenLongTTL)
 	require.Equal(t, 10, config.Auth.Hash.Cost)
@@ -46,6 +47,16 @@ func TestHttp(t *testing.T) {
 	require.Equal(t, []string{"Content-Length"}, cors.ExposeHeaders)
 	require.True(t, cors.AllowCredentials)
 	require.Equal(t, 12*time.Hour, cors.MaxAge)
+}
+
+func TestHttpCookie(t *testing.T) {
+	cookie := config.Http.Cookie
+	require.Equal(t, "localhost", cookie.Domain)
+	require.Equal(t, "/", cookie.Path)
+	require.Equal(t, "none", cookie.SameSiteMode)
+	require.Equal(t, http.SameSiteNoneMode, cookie.SameSite())
+	require.True(t, cookie.Secure)
+	require.True(t, cookie.HttpOnly)
 }
 
 func TestLog(t *testing.T) {

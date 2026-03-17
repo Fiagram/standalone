@@ -27,6 +27,7 @@ var _ AuthLogic = (oapi.ServerInterface)(nil)
 
 type authLogic struct {
 	authConfig          configs.Auth
+	cookieConfig        configs.Cookie
 	usernamesTakenCache dao_cache.UsernamesTaken
 	refreshTokenCache   dao_cache.RefreshToken
 	accountLogic        logic_account.Account
@@ -36,6 +37,7 @@ type authLogic struct {
 
 func NewAuthLogic(
 	authConfig configs.Auth,
+	cookieConfig configs.Cookie,
 	usernamesTakenCache dao_cache.UsernamesTaken,
 	refreshTokenCache dao_cache.RefreshToken,
 	accountLogic logic_account.Account,
@@ -44,6 +46,7 @@ func NewAuthLogic(
 ) AuthLogic {
 	return &authLogic{
 		authConfig:          authConfig,
+		cookieConfig:        cookieConfig,
 		usernamesTakenCache: usernamesTakenCache,
 		refreshTokenCache:   refreshTokenCache,
 		accountLogic:        accountLogic,
@@ -127,13 +130,13 @@ func (o *authLogic) RefreshToken(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    newRefreshToken,
-		Path:     "/",
-		Domain:   o.authConfig.Domain,
+		Path:     o.cookieConfig.Path,
+		Domain:   o.cookieConfig.Domain,
 		Expires:  newRefreshTokenExpiresAt,
 		MaxAge:   int(time.Until(newRefreshTokenExpiresAt).Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   o.cookieConfig.Secure,
+		HttpOnly: o.cookieConfig.HttpOnly,
+		SameSite: o.cookieConfig.SameSite(),
 	})
 
 	// Return the new access token in response
@@ -258,13 +261,13 @@ func (o *authLogic) SignIn(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Path:     "/",
-		Domain:   o.authConfig.Domain,
+		Path:     o.cookieConfig.Path,
+		Domain:   o.cookieConfig.Domain,
 		Expires:  refreshTokenExpiresAt,
 		MaxAge:   int(time.Until(refreshTokenExpiresAt).Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   o.cookieConfig.Secure,
+		HttpOnly: o.cookieConfig.HttpOnly,
+		SameSite: o.cookieConfig.SameSite(),
 	})
 
 	// Return the access token to the response
@@ -320,12 +323,12 @@ func (o *authLogic) SignOut(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    "",
-		Path:     "/",
-		Domain:   o.authConfig.Domain,
+		Path:     o.cookieConfig.Path,
+		Domain:   o.cookieConfig.Domain,
 		MaxAge:   -1,
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   o.cookieConfig.Secure,
+		HttpOnly: o.cookieConfig.HttpOnly,
+		SameSite: o.cookieConfig.SameSite(),
 	})
 
 	c.Status(http.StatusNoContent)
@@ -443,13 +446,13 @@ func (o *authLogic) SignUp(c *gin.Context) {
 	http.SetCookie(c.Writer, &http.Cookie{
 		Name:     "refresh_token",
 		Value:    refreshToken,
-		Path:     "/",
-		Domain:   o.authConfig.Domain,
+		Path:     o.cookieConfig.Path,
+		Domain:   o.cookieConfig.Domain,
 		Expires:  refreshTokenExpiresAt,
 		MaxAge:   int(time.Until(refreshTokenExpiresAt).Seconds()),
-		Secure:   true,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   o.cookieConfig.Secure,
+		HttpOnly: o.cookieConfig.HttpOnly,
+		SameSite: o.cookieConfig.SameSite(),
 	})
 
 	// Return the access token to the response
