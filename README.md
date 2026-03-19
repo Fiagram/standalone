@@ -16,7 +16,7 @@
 - [x] Add middleware layers to http server
 - [x] Implement `users` methods use middleware in gin framework
 - [x] Complete `users` CRUD methods
-- [ ] Deploy the the system to a real domain (fiagram.io.vn)
+- [x] Deploy the the system to a real domain (fiagram.io.vn)
 - [x] Integrate mock framework for automation testing
 - [x] Fixbug SQL injection when querying database directly
 - [x] Apply Docker for production releases
