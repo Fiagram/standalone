@@ -12,6 +12,10 @@ type AccountRole struct {
 	Name string `json:"name"`
 }
 
+type accountRoleList []AccountRole
+
+var accountRoleCache accountRoleList
+
 type AccountRoleAccessor interface {
 	GetRoleById(ctx context.Context, id uint8) (AccountRole, error)
 	GetRoleByName(ctx context.Context, name string) (AccountRole, error)
@@ -33,48 +37,78 @@ func NewAccountRoleAccessor(
 	}
 }
 
+func (c *accountRoleList) fetchAccountRoles(ctx context.Context, a accountRoleAccessor) error {
+	logger := logger.LoggerWithContext(ctx, a.logger)
+	*c = (*c)[:0]
+	const query = `SELECT id, name FROM account_role`
+	rows, err := a.exec.QueryContext(ctx, query)
+	if err != nil {
+		logger.With(zap.Error(err)).Error("failed to fetch account role list")
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var item AccountRole
+		err = rows.Scan(&item.Id, &item.Name)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("failed to scan account role row")
+			return err
+		}
+		*c = append(*c, item)
+	}
+
+	return nil
+}
+
 func (a accountRoleAccessor) GetRoleById(
 	ctx context.Context,
 	id uint8,
 ) (AccountRole, error) {
+	if accountRoleCache == nil {
+		err := accountRoleCache.fetchAccountRoles(ctx, a)
+		if err != nil {
+			return AccountRole{}, err
+		}
+	}
+
 	if id == 0 {
 		return AccountRole{}, ErrLackOfInfor
 	}
 
 	logger := logger.LoggerWithContext(ctx, a.logger).With(zap.Any("role_id", id))
-	const query = `SELECT id, name FROM account_role WHERE id = ?`
-	row := a.exec.QueryRowContext(ctx, query, id)
-
-	var out AccountRole
-	err := row.Scan(&out.Id, &out.Name)
-	if err != nil {
-		logger.With(zap.Error(err)).Error("failed to get account row by id")
-		return AccountRole{}, err
+	for _, item := range accountRoleCache {
+		if item.Id == id {
+			return item, nil
+		}
 	}
-
-	return out, nil
+	logger.With(zap.Error(ErrAccRoleNotFound))
+	return AccountRole{}, ErrAccRoleNotFound
 }
 
 func (a accountRoleAccessor) GetRoleByName(
 	ctx context.Context,
 	name string,
 ) (AccountRole, error) {
+	if accountRoleCache == nil {
+		err := accountRoleCache.fetchAccountRoles(ctx, a)
+		if err != nil {
+			return AccountRole{}, err
+		}
+	}
+
 	if name == "" {
 		return AccountRole{}, ErrLackOfInfor
 	}
 
 	logger := logger.LoggerWithContext(ctx, a.logger).With(zap.Any("role_name", name))
-	const query = `SELECT id, name FROM account_role WHERE name = ?`
-	row := a.exec.QueryRowContext(ctx, query, name)
-
-	var out AccountRole
-	err := row.Scan(&out.Id, &out.Name)
-	if err != nil {
-		logger.With(zap.Error(err)).Error("failed to get account row by name")
-		return AccountRole{}, err
+	for _, item := range accountRoleCache {
+		if name == item.Name {
+			return item, nil
+		}
 	}
-
-	return out, nil
+	logger.With(zap.Error(ErrAccRoleNotFound))
+	return AccountRole{}, ErrAccRoleNotFound
 }
 
 func (a accountRoleAccessor) WithExecutor(

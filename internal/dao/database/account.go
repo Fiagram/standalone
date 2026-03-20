@@ -17,7 +17,7 @@ type Account struct {
 	Fullname    string    `json:"fullname"`
 	Email       string    `json:"email"`
 	PhoneNumber string    `json:"phone_number"`
-	RoleId      uint8     `json:"role_id"`
+	RoleId      uint8     `json:"of_role_id"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -67,13 +67,13 @@ func (a accountAccessor) CreateAccount(
 
 	logger := logger.LoggerWithContext(ctx, a.logger).With(zap.Any("account", acc))
 	const query = `INSERT INTO accounts 
-			(username, fullname, email, phone_number, role_id) 
+			(username, fullname, email, phone_number, of_role_id) 
 			VALUES (?, ?, ?, ?, ?)`
 	result, err := a.exec.ExecContext(ctx, query,
-		strings.TrimSpace(acc.Username),
-		strings.TrimSpace(acc.Fullname),
-		strings.TrimSpace(acc.Email),
-		strings.TrimSpace(acc.PhoneNumber),
+		acc.Username,
+		acc.Fullname,
+		acc.Email,
+		acc.PhoneNumber,
 		acc.RoleId,
 	)
 	if err != nil {
@@ -226,15 +226,15 @@ func (a accountAccessor) UpdateAccount(
 			fullname = ?, 
 			email = ?, 
 			phone_number = ?, 
-			role_id = ? 
+			of_role_id = ? 
 			WHERE username = ?`
 
 	result, err := a.exec.ExecContext(ctx, query,
-		strings.TrimSpace(acc.Fullname),
-		strings.TrimSpace(acc.Email),
-		strings.TrimSpace(acc.PhoneNumber),
+		acc.Fullname,
+		acc.Email,
+		acc.PhoneNumber,
 		acc.RoleId,
-		strings.TrimSpace(acc.Username),
+		acc.Username,
 	)
 	if err != nil {
 		logger.With(zap.Error(err)).Error("failed to update account")

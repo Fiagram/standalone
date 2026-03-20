@@ -14,6 +14,7 @@ import (
 )
 
 var ErrLackOfInfor = errors.New("lack of information")
+var ErrAccRoleNotFound = errors.New("account role not found")
 
 type Executor interface {
 	Exec(query string, args ...any) (sql.Result, error)
