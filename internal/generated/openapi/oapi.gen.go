@@ -4,7 +4,11 @@
 package oapi
 
 import (
+	"fmt"
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
 
 const (
@@ -47,7 +51,7 @@ type Account struct {
 	Email    Email    `json:"email"`
 	Fullname Fullname `json:"fullname"`
 
-	// PhoneNumber Abide by the E.164 standard
+	// PhoneNumber the phone number of a created account
 	PhoneNumber *PhoneNumber `json:"phoneNumber,omitempty"`
 	Role        Role         `json:"role"`
 
@@ -74,10 +78,12 @@ type Fullname = string
 // one lowercase, one digit, and one special character; no whitespace.
 type Password = string
 
-// PhoneNumber Abide by the E.164 standard
-type PhoneNumber struct {
-	CountryCode *string `json:"countryCode,omitempty"`
-	Number      *string `json:"number,omitempty"`
+// PhoneNumber the phone number of a created account
+type PhoneNumber = string
+
+// ProfileMeResponse defines model for ProfileMeResponse.
+type ProfileMeResponse struct {
+	Account Account `json:"account"`
 }
 
 // RefreshResponse defines model for RefreshResponse.
@@ -129,10 +135,22 @@ type SignupResponse struct {
 // cannot start or end with dot/underscore; no consecutive dots or underscores.
 type Username = string
 
-// UsersMeResponse defines model for UsersMeResponse.
-type UsersMeResponse struct {
-	Account Account `json:"account"`
+// Webhook defines model for Webhook.
+type Webhook struct {
+	// Id Server-generated unique ID
+	Id   *int64 `json:"id,omitempty"`
+	Name string `json:"name"`
+	Url  string `json:"url"`
 }
+
+// Limit defines model for Limit.
+type Limit = int
+
+// Offset defines model for Offset.
+type Offset = int
+
+// WebhookId defines model for WebhookId.
+type WebhookId = int64
 
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
@@ -152,11 +170,26 @@ type TooManyRequests = ErrorResponse
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = ErrorResponse
 
+// GetProfileWebhooksParams defines parameters for GetProfileWebhooks.
+type GetProfileWebhooksParams struct {
+	// Limit Max items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Items to skip
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // SignInJSONRequestBody defines body for SignIn for application/json ContentType.
 type SignInJSONRequestBody = SigninRequest
 
 // SignUpJSONRequestBody defines body for SignUp for application/json ContentType.
 type SignUpJSONRequestBody = SignupRequest
+
+// CreateProfileWebhookJSONRequestBody defines body for CreateProfileWebhook for application/json ContentType.
+type CreateProfileWebhookJSONRequestBody = Webhook
+
+// UpdateProfileWebhookJSONRequestBody defines body for UpdateProfileWebhook for application/json ContentType.
+type UpdateProfileWebhookJSONRequestBody = Webhook
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -172,9 +205,24 @@ type ServerInterface interface {
 	// Sign out and revoke refresh token
 	// (POST /auth/token/signout)
 	SignOut(c *gin.Context)
-	// Get current user information
-	// (GET /users/me)
-	GetMe(c *gin.Context)
+	// Get current account information
+	// (GET /profile/me)
+	GetProfileMe(c *gin.Context)
+	// List current user's webhooks
+	// (GET /profile/webhooks)
+	GetProfileWebhooks(c *gin.Context, params GetProfileWebhooksParams)
+	// Create a new webhook
+	// (POST /profile/webhooks)
+	CreateProfileWebhook(c *gin.Context)
+	// Delete a webhook
+	// (DELETE /profile/webhooks/{webhookId})
+	DeleteProfileWebhook(c *gin.Context, webhookId WebhookId)
+	// Get a specific webhook
+	// (GET /profile/webhooks/{webhookId})
+	GetProfileWebhook(c *gin.Context, webhookId WebhookId)
+	// Update a webhook
+	// (PUT /profile/webhooks/{webhookId})
+	UpdateProfileWebhook(c *gin.Context, webhookId WebhookId)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -242,8 +290,8 @@ func (siw *ServerInterfaceWrapper) SignOut(c *gin.Context) {
 	siw.Handler.SignOut(c)
 }
 
-// GetMe operation middleware
-func (siw *ServerInterfaceWrapper) GetMe(c *gin.Context) {
+// GetProfileMe operation middleware
+func (siw *ServerInterfaceWrapper) GetProfileMe(c *gin.Context) {
 
 	c.Set(BearerAuthScopes, []string{})
 
@@ -254,7 +302,136 @@ func (siw *ServerInterfaceWrapper) GetMe(c *gin.Context) {
 		}
 	}
 
-	siw.Handler.GetMe(c)
+	siw.Handler.GetProfileMe(c)
+}
+
+// GetProfileWebhooks operation middleware
+func (siw *ServerInterfaceWrapper) GetProfileWebhooks(c *gin.Context) {
+
+	var err error
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetProfileWebhooksParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", c.Request.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", c.Request.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetProfileWebhooks(c, params)
+}
+
+// CreateProfileWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CreateProfileWebhook(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateProfileWebhook(c)
+}
+
+// DeleteProfileWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeleteProfileWebhook(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId WebhookId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter webhookId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteProfileWebhook(c, webhookId)
+}
+
+// GetProfileWebhook operation middleware
+func (siw *ServerInterfaceWrapper) GetProfileWebhook(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId WebhookId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter webhookId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetProfileWebhook(c, webhookId)
+}
+
+// UpdateProfileWebhook operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProfileWebhook(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId WebhookId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter webhookId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateProfileWebhook(c, webhookId)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -288,5 +465,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/auth/signup", wrapper.SignUp)
 	router.POST(options.BaseURL+"/auth/token/refresh", wrapper.RefreshToken)
 	router.POST(options.BaseURL+"/auth/token/signout", wrapper.SignOut)
-	router.GET(options.BaseURL+"/users/me", wrapper.GetMe)
+	router.GET(options.BaseURL+"/profile/me", wrapper.GetProfileMe)
+	router.GET(options.BaseURL+"/profile/webhooks", wrapper.GetProfileWebhooks)
+	router.POST(options.BaseURL+"/profile/webhooks", wrapper.CreateProfileWebhook)
+	router.DELETE(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.DeleteProfileWebhook)
+	router.GET(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.GetProfileWebhook)
+	router.PUT(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.UpdateProfileWebhook)
 }

@@ -14,6 +14,6 @@ var Module = fx.Module(
 		logic_account.NewAccount,
 		token_logic.NewTokenLogic,
 		http_logic.NewAuthLogic,
-		http_logic.NewUsersLogic,
+		http_logic.NewProfileLogic,
 	),
 )

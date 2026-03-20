@@ -2,7 +2,6 @@ package logic_http
 
 import (
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/Fiagram/standalone/internal/configs"
@@ -271,9 +270,6 @@ func (o *authLogic) SignIn(c *gin.Context) {
 	})
 
 	// Return the access token to the response
-	phoneNumberRaw := account.AccountInfo.PhoneNumber
-	countryCode := strings.Split(phoneNumberRaw, " ")[0]
-	phoneNumber := strings.Split(phoneNumberRaw, " ")[1]
 	c.JSON(http.StatusOK, oapi.SigninResponse{
 		AccessToken: oapi.AccessTokenResponse{
 			Token: accessToken,
@@ -283,10 +279,7 @@ func (o *authLogic) SignIn(c *gin.Context) {
 			Username: username,
 			Fullname: account.AccountInfo.Fullname,
 			Email:    account.AccountInfo.Email,
-			PhoneNumber: &oapi.PhoneNumber{
-				CountryCode: utils.Ptr(countryCode),
-				Number:      utils.Ptr(phoneNumber),
-			},
+			PhoneNumber: utils.Ptr(oapi.PhoneNumber(account.AccountInfo.PhoneNumber)),
 			Role: "member",
 		},
 	})
@@ -389,7 +382,7 @@ func (o *authLogic) SignUp(c *gin.Context) {
 			Username:    username,
 			Fullname:    req.Account.Fullname,
 			Email:       req.Account.Email,
-			PhoneNumber: *req.Account.PhoneNumber.CountryCode + " " + *req.Account.PhoneNumber.Number,
+			PhoneNumber: string(*req.Account.PhoneNumber),
 			Role:        2,
 		},
 		Password: *req.Password,
@@ -465,10 +458,7 @@ func (o *authLogic) SignUp(c *gin.Context) {
 			Username: username,
 			Fullname: req.Account.Fullname,
 			Email:    req.Account.Email,
-			PhoneNumber: &oapi.PhoneNumber{
-				CountryCode: req.Account.PhoneNumber.CountryCode,
-				Number:      req.Account.PhoneNumber.Number,
-			},
+			PhoneNumber: req.Account.PhoneNumber,
 			Role: "member",
 		},
 	})

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     username VARCHAR(255) NOT NULL,
     fullname VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(20) NOT NULL,
+    phone_number VARCHAR(15) NOT NULL,
     of_role_id INT UNSIGNED NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -35,13 +35,14 @@ CREATE TABLE IF NOT EXISTS account_passwords (
 CREATE TABLE IF NOT EXISTS chatbot_webhooks (
     id BIGINT UNSIGNED AUTO_INCREMENT,
     of_account_id BIGINT UNSIGNED,
-    name VARCHAR(150) NOT NULL,
+    name VARCHAR(26) NOT NULL,
     url VARCHAR(500) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    FOREIGN KEY (of_account_id) REFERENCES accounts(id)
+    FOREIGN KEY (of_account_id) REFERENCES accounts(id),
+    UNIQUE (of_account_id, name)
 );
 
 INSERT INTO account_role (id, name) VALUES (0, 'none');

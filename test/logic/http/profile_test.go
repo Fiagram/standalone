@@ -1,0 +1,651 @@
+package logic_http_test
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	dao_database "github.com/Fiagram/standalone/internal/dao/database"
+	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
+	logic_account "github.com/Fiagram/standalone/internal/logic/account"
+	logic_http "github.com/Fiagram/standalone/internal/logic/http"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
+)
+
+// ---------------------------------------------------------------------------
+// Mock: logic_account.Account
+// ---------------------------------------------------------------------------
+
+type mockAccountLogic struct {
+	getAccountFn func(ctx context.Context, params logic_account.GetAccountParams) (logic_account.GetAccountOutput, error)
+}
+
+func (m *mockAccountLogic) CreateAccount(_ context.Context, _ logic_account.CreateAccountParams) (logic_account.CreateAccountOutput, error) {
+	return logic_account.CreateAccountOutput{}, nil
+}
+func (m *mockAccountLogic) CheckAccountValid(_ context.Context, _ logic_account.CheckAccountValidParams) (logic_account.CheckAccountValidOutput, error) {
+	return logic_account.CheckAccountValidOutput{}, nil
+}
+func (m *mockAccountLogic) IsUsernameTaken(_ context.Context, _ logic_account.IsUsernameTakenParams) (logic_account.IsUsernameTakenOutput, error) {
+	return logic_account.IsUsernameTakenOutput{}, nil
+}
+func (m *mockAccountLogic) GetAccount(ctx context.Context, params logic_account.GetAccountParams) (logic_account.GetAccountOutput, error) {
+	if m.getAccountFn != nil {
+		return m.getAccountFn(ctx, params)
+	}
+	return logic_account.GetAccountOutput{}, nil
+}
+func (m *mockAccountLogic) GetAccountAll(_ context.Context, _ logic_account.GetAccountAllParams) (logic_account.GetAccountAllOutput, error) {
+	return logic_account.GetAccountAllOutput{}, nil
+}
+func (m *mockAccountLogic) GetAccountList(_ context.Context, _ logic_account.GetAccountListParams) (logic_account.GetAccountListOutput, error) {
+	return logic_account.GetAccountListOutput{}, nil
+}
+func (m *mockAccountLogic) UpdateAccountInfo(_ context.Context, _ logic_account.UpdateAccountInfoParams) (logic_account.UpdateAccountInfoOutput, error) {
+	return logic_account.UpdateAccountInfoOutput{}, nil
+}
+func (m *mockAccountLogic) UpdateAccountPassword(_ context.Context, _ logic_account.UpdateAccountPasswordParams) (logic_account.UpdateAccountPasswordOutput, error) {
+	return logic_account.UpdateAccountPasswordOutput{}, nil
+}
+func (m *mockAccountLogic) DeleteAccount(_ context.Context, _ logic_account.DeleteAccountParams) error {
+	return nil
+}
+func (m *mockAccountLogic) DeleteAccountByUsername(_ context.Context, _ logic_account.DeleteAccountByUsernameParams) error {
+	return nil
+}
+
+// ---------------------------------------------------------------------------
+// Mock: dao_database.ChatbotWebhookAccessor
+// ---------------------------------------------------------------------------
+
+type mockWebhookAccessor struct {
+	createWebhookFn        func(ctx context.Context, webhook dao_database.ChatbotWebhook) (uint64, error)
+	getWebhookFn           func(ctx context.Context, id uint64) (dao_database.ChatbotWebhook, error)
+	getWebhooksByAccountFn func(ctx context.Context, accountId uint64, limit, offset int) ([]dao_database.ChatbotWebhook, error)
+	updateWebhookFn        func(ctx context.Context, webhook dao_database.ChatbotWebhook) error
+	deleteWebhookFn        func(ctx context.Context, id uint64) error
+}
+
+func (m *mockWebhookAccessor) CreateWebhook(ctx context.Context, webhook dao_database.ChatbotWebhook) (uint64, error) {
+	if m.createWebhookFn != nil {
+		return m.createWebhookFn(ctx, webhook)
+	}
+	return 0, nil
+}
+func (m *mockWebhookAccessor) GetWebhook(ctx context.Context, id uint64) (dao_database.ChatbotWebhook, error) {
+	if m.getWebhookFn != nil {
+		return m.getWebhookFn(ctx, id)
+	}
+	return dao_database.ChatbotWebhook{}, nil
+}
+func (m *mockWebhookAccessor) GetWebhooksByAccountId(ctx context.Context, accountId uint64, limit, offset int) ([]dao_database.ChatbotWebhook, error) {
+	if m.getWebhooksByAccountFn != nil {
+		return m.getWebhooksByAccountFn(ctx, accountId, limit, offset)
+	}
+	return nil, nil
+}
+func (m *mockWebhookAccessor) UpdateWebhook(ctx context.Context, webhook dao_database.ChatbotWebhook) error {
+	if m.updateWebhookFn != nil {
+		return m.updateWebhookFn(ctx, webhook)
+	}
+	return nil
+}
+func (m *mockWebhookAccessor) DeleteWebhook(ctx context.Context, id uint64) error {
+	if m.deleteWebhookFn != nil {
+		return m.deleteWebhookFn(ctx, id)
+	}
+	return nil
+}
+func (m *mockWebhookAccessor) WithExecutor(_ dao_database.Executor) dao_database.ChatbotWebhookAccessor {
+	return m
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+func init() {
+	gin.SetMode(gin.TestMode)
+}
+
+func newTestProfileLogic(
+	accountLogic logic_account.Account,
+	webhookAccessor dao_database.ChatbotWebhookAccessor,
+) logic_http.ProfileLogic {
+	logger := zap.NewNop()
+	return logic_http.NewProfileLogic(accountLogic, webhookAccessor, logger)
+}
+
+// newGinContext creates a gin.Context backed by httptest for the given method, path, and optional body.
+func newGinContext(method, path string, body any) (*gin.Context, *httptest.ResponseRecorder) {
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+
+	var req *http.Request
+	if body != nil {
+		b, _ := json.Marshal(body)
+		req = httptest.NewRequest(method, path, bytes.NewReader(b))
+		req.Header.Set("Content-Type", "application/json")
+	} else {
+		req = httptest.NewRequest(method, path, nil)
+	}
+	c.Request = req
+	return c, w
+}
+
+// setAccountId sets the "accountId" key in the gin context, mimicking the auth middleware.
+func setAccountId(c *gin.Context, id uint64) {
+	c.Set("accountId", id)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GetProfileMe
+// ---------------------------------------------------------------------------
+
+func TestGetProfileMe_Success(t *testing.T) {
+	acctLogic := &mockAccountLogic{
+		getAccountFn: func(_ context.Context, params logic_account.GetAccountParams) (logic_account.GetAccountOutput, error) {
+			require.Equal(t, uint64(42), params.AccountId)
+			return logic_account.GetAccountOutput{
+				AccountId: 42,
+				AccountInfo: logic_account.AccountInfo{
+					Username:    "johndoe",
+					Fullname:    "John Doe",
+					Email:       "john@example.com",
+					PhoneNumber: "1234567890",
+					Role:        logic_account.Member,
+				},
+			}, nil
+		},
+	}
+	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{})
+
+	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
+	setAccountId(c, 42)
+	pl.GetProfileMe(c)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp oapi.ProfileMeResponse
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.Equal(t, "johndoe", resp.Account.Username)
+	require.Equal(t, "John Doe", resp.Account.Fullname)
+	require.Equal(t, "john@example.com", resp.Account.Email)
+}
+
+func TestGetProfileMe_NoAccountId(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
+	// Do NOT set accountId
+	pl.GetProfileMe(c)
+
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestGetProfileMe_AccountLogicError(t *testing.T) {
+	acctLogic := &mockAccountLogic{
+		getAccountFn: func(_ context.Context, _ logic_account.GetAccountParams) (logic_account.GetAccountOutput, error) {
+			return logic_account.GetAccountOutput{}, errors.New("db down")
+		},
+	}
+	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{})
+
+	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
+	setAccountId(c, 1)
+	pl.GetProfileMe(c)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GetProfileWebhooks
+// ---------------------------------------------------------------------------
+
+func TestGetProfileWebhooks_Success_Defaults(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhooksByAccountFn: func(_ context.Context, accountId uint64, limit, offset int) ([]dao_database.ChatbotWebhook, error) {
+			require.Equal(t, uint64(10), accountId)
+			require.Equal(t, 20, limit) // default
+			require.Equal(t, 0, offset) // default
+			return []dao_database.ChatbotWebhook{
+				{Id: 1, OfAccountId: 10, Name: "hook1", Url: "https://a.com"},
+				{Id: 2, OfAccountId: 10, Name: "hook2", Url: "https://b.com"},
+			}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
+	setAccountId(c, 10)
+	pl.GetProfileWebhooks(c, oapi.GetProfileWebhooksParams{})
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp []oapi.Webhook
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.Len(t, resp, 2)
+	require.Equal(t, "hook1", resp[0].Name)
+	require.Equal(t, "hook2", resp[1].Name)
+}
+
+func TestGetProfileWebhooks_CustomLimitOffset(t *testing.T) {
+	limit := 5
+	offset := 10
+	webhookAcc := &mockWebhookAccessor{
+		getWebhooksByAccountFn: func(_ context.Context, _ uint64, l, o int) ([]dao_database.ChatbotWebhook, error) {
+			require.Equal(t, 5, l)
+			require.Equal(t, 10, o)
+			return nil, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks?limit=5&offset=10", nil)
+	setAccountId(c, 1)
+	pl.GetProfileWebhooks(c, oapi.GetProfileWebhooksParams{
+		Limit:  &limit,
+		Offset: &offset,
+	})
+
+	require.Equal(t, http.StatusOK, w.Code)
+}
+
+func TestGetProfileWebhooks_NoAccountId(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
+	pl.GetProfileWebhooks(c, oapi.GetProfileWebhooksParams{})
+
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestGetProfileWebhooks_AccessorError(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhooksByAccountFn: func(_ context.Context, _ uint64, _, _ int) ([]dao_database.ChatbotWebhook, error) {
+			return nil, errors.New("query failed")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
+	setAccountId(c, 1)
+	pl.GetProfileWebhooks(c, oapi.GetProfileWebhooksParams{})
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestGetProfileWebhooks_Empty(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhooksByAccountFn: func(_ context.Context, _ uint64, _, _ int) ([]dao_database.ChatbotWebhook, error) {
+			return []dao_database.ChatbotWebhook{}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
+	setAccountId(c, 1)
+	pl.GetProfileWebhooks(c, oapi.GetProfileWebhooksParams{})
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp []oapi.Webhook
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.Len(t, resp, 0)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: CreateProfileWebhook
+// ---------------------------------------------------------------------------
+
+func TestCreateProfileWebhook_Success(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		createWebhookFn: func(_ context.Context, wh dao_database.ChatbotWebhook) (uint64, error) {
+			require.Equal(t, uint64(7), wh.OfAccountId)
+			require.Equal(t, "my-hook", wh.Name)
+			require.Equal(t, "https://example.com/hook", wh.Url)
+			return 99, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	body := oapi.Webhook{Name: "my-hook", Url: "https://example.com/hook"}
+	c, w := newGinContext(http.MethodPost, "/profile/webhooks", body)
+	setAccountId(c, 7)
+	pl.CreateProfileWebhook(c)
+
+	require.Equal(t, http.StatusCreated, w.Code)
+
+	var resp oapi.Webhook
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.NotNil(t, resp.Id)
+	require.Equal(t, int64(99), *resp.Id)
+	require.Equal(t, "my-hook", resp.Name)
+	require.Equal(t, "https://example.com/hook", resp.Url)
+}
+
+func TestCreateProfileWebhook_NoAccountId(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	body := oapi.Webhook{Name: "h", Url: "http://x.com"}
+	c, w := newGinContext(http.MethodPost, "/profile/webhooks", body)
+	pl.CreateProfileWebhook(c)
+
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestCreateProfileWebhook_InvalidBody(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	// Send invalid JSON (string instead of object)
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPost, "/profile/webhooks",
+		bytes.NewReader([]byte(`not json`)))
+	c.Request.Header.Set("Content-Type", "application/json")
+	setAccountId(c, 1)
+	pl.CreateProfileWebhook(c)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestCreateProfileWebhook_AccessorError(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		createWebhookFn: func(_ context.Context, _ dao_database.ChatbotWebhook) (uint64, error) {
+			return 0, errors.New("duplicate entry")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	body := oapi.Webhook{Name: "dup", Url: "http://x.com"}
+	c, w := newGinContext(http.MethodPost, "/profile/webhooks", body)
+	setAccountId(c, 1)
+	pl.CreateProfileWebhook(c)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: GetProfileWebhook
+// ---------------------------------------------------------------------------
+
+func TestGetProfileWebhook_Success(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, id uint64) (dao_database.ChatbotWebhook, error) {
+			require.Equal(t, uint64(55), id)
+			return dao_database.ChatbotWebhook{
+				Id: 55, OfAccountId: 3, Name: "wh", Url: "https://wh.io",
+			}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks/55", nil)
+	setAccountId(c, 3)
+	pl.GetProfileWebhook(c, 55)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp oapi.Webhook
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.NotNil(t, resp.Id)
+	require.Equal(t, int64(55), *resp.Id)
+	require.Equal(t, "wh", resp.Name)
+}
+
+func TestGetProfileWebhook_NoAccountId(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks/1", nil)
+	pl.GetProfileWebhook(c, 1)
+
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestGetProfileWebhook_NotFound(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{}, errors.New("sql: no rows")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks/999", nil)
+	setAccountId(c, 1)
+	pl.GetProfileWebhook(c, 999)
+
+	require.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestGetProfileWebhook_Forbidden(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{
+				Id: 10, OfAccountId: 99, Name: "other", Url: "http://x.com",
+			}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodGet, "/profile/webhooks/10", nil)
+	setAccountId(c, 1) // different from OfAccountId=99
+	pl.GetProfileWebhook(c, 10)
+
+	require.Equal(t, http.StatusForbidden, w.Code)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: UpdateProfileWebhook
+// ---------------------------------------------------------------------------
+
+func TestUpdateProfileWebhook_Success(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, id uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{
+				Id: id, OfAccountId: 5, Name: "old", Url: "http://old.com",
+			}, nil
+		},
+		updateWebhookFn: func(_ context.Context, wh dao_database.ChatbotWebhook) error {
+			require.Equal(t, uint64(20), wh.Id)
+			require.Equal(t, "new-name", wh.Name)
+			require.Equal(t, "https://new.com", wh.Url)
+			return nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	body := oapi.Webhook{Name: "new-name", Url: "https://new.com"}
+	c, w := newGinContext(http.MethodPut, "/profile/webhooks/20", body)
+	setAccountId(c, 5)
+	pl.UpdateProfileWebhook(c, 20)
+
+	require.Equal(t, http.StatusOK, w.Code)
+
+	var resp oapi.Webhook
+	err := json.Unmarshal(w.Body.Bytes(), &resp)
+	require.NoError(t, err)
+	require.NotNil(t, resp.Id)
+	require.Equal(t, int64(20), *resp.Id)
+	require.Equal(t, "new-name", resp.Name)
+	require.Equal(t, "https://new.com", resp.Url)
+}
+
+func TestUpdateProfileWebhook_NoAccountId(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
+	c, w := newGinContext(http.MethodPut, "/profile/webhooks/1", body)
+	pl.UpdateProfileWebhook(c, 1)
+
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestUpdateProfileWebhook_NotFound(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{}, errors.New("not found")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
+	c, w := newGinContext(http.MethodPut, "/profile/webhooks/999", body)
+	setAccountId(c, 1)
+	pl.UpdateProfileWebhook(c, 999)
+
+	require.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestUpdateProfileWebhook_Forbidden(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{
+				Id: 10, OfAccountId: 99, // owned by account 99
+			}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
+	c, w := newGinContext(http.MethodPut, "/profile/webhooks/10", body)
+	setAccountId(c, 1) // not 99
+	pl.UpdateProfileWebhook(c, 10)
+
+	require.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestUpdateProfileWebhook_InvalidBody(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{Id: 1, OfAccountId: 1}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	w := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(w)
+	c.Request = httptest.NewRequest(http.MethodPut, "/profile/webhooks/1",
+		bytes.NewReader([]byte(`{bad json`)))
+	c.Request.Header.Set("Content-Type", "application/json")
+	setAccountId(c, 1)
+	pl.UpdateProfileWebhook(c, 1)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+func TestUpdateProfileWebhook_AccessorError(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{Id: 1, OfAccountId: 1}, nil
+		},
+		updateWebhookFn: func(_ context.Context, _ dao_database.ChatbotWebhook) error {
+			return errors.New("db error")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
+	c, w := newGinContext(http.MethodPut, "/profile/webhooks/1", body)
+	setAccountId(c, 1)
+	pl.UpdateProfileWebhook(c, 1)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: DeleteProfileWebhook
+// ---------------------------------------------------------------------------
+
+func TestDeleteProfileWebhook_Success(t *testing.T) {
+	deleteCalled := false
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, id uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{Id: id, OfAccountId: 8}, nil
+		},
+		deleteWebhookFn: func(_ context.Context, id uint64) error {
+			require.Equal(t, uint64(30), id)
+			deleteCalled = true
+			return nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, _ := newGinContext(http.MethodDelete, "/profile/webhooks/30", nil)
+	setAccountId(c, 8)
+	pl.DeleteProfileWebhook(c, 30)
+
+	// c.Status() sets gin's internal writer status but does not flush to
+	// httptest.ResponseRecorder when no body is written, so check the writer.
+	require.Equal(t, http.StatusNoContent, c.Writer.Status())
+	require.True(t, deleteCalled)
+}
+
+func TestDeleteProfileWebhook_NoAccountId(t *testing.T) {
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+
+	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/1", nil)
+	pl.DeleteProfileWebhook(c, 1)
+
+	require.Equal(t, http.StatusUnauthorized, w.Code)
+}
+
+func TestDeleteProfileWebhook_NotFound(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{}, errors.New("not found")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/999", nil)
+	setAccountId(c, 1)
+	pl.DeleteProfileWebhook(c, 999)
+
+	require.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteProfileWebhook_Forbidden(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{
+				Id: 10, OfAccountId: 99,
+			}, nil
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/10", nil)
+	setAccountId(c, 1) // not 99
+	pl.DeleteProfileWebhook(c, 10)
+
+	require.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestDeleteProfileWebhook_AccessorError(t *testing.T) {
+	webhookAcc := &mockWebhookAccessor{
+		getWebhookFn: func(_ context.Context, _ uint64) (dao_database.ChatbotWebhook, error) {
+			return dao_database.ChatbotWebhook{Id: 1, OfAccountId: 1}, nil
+		},
+		deleteWebhookFn: func(_ context.Context, _ uint64) error {
+			return errors.New("db error")
+		},
+	}
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+
+	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/1", nil)
+	setAccountId(c, 1)
+	pl.DeleteProfileWebhook(c, 1)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}

@@ -1,0 +1,301 @@
+package logic_http
+
+import (
+	"net/http"
+
+	dao_database "github.com/Fiagram/standalone/internal/dao/database"
+	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
+	"github.com/Fiagram/standalone/internal/logger"
+	logic_account "github.com/Fiagram/standalone/internal/logic/account"
+	"github.com/Fiagram/standalone/internal/utils"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+type ProfileLogic interface {
+	GetProfileMe(c *gin.Context)
+
+	GetProfileWebhooks(c *gin.Context, params oapi.GetProfileWebhooksParams)
+	CreateProfileWebhook(c *gin.Context)
+	GetProfileWebhook(c *gin.Context, webhookId oapi.WebhookId)
+	UpdateProfileWebhook(c *gin.Context, webhookId oapi.WebhookId)
+	DeleteProfileWebhook(c *gin.Context, webhookId oapi.WebhookId)
+}
+
+var _ ProfileLogic = (oapi.ServerInterface)(nil)
+
+type profileLogic struct {
+	accountLogic    logic_account.Account
+	webhookAccessor dao_database.ChatbotWebhookAccessor
+	logger          *zap.Logger
+}
+
+func NewProfileLogic(
+	accountLogic logic_account.Account,
+	webhookAccessor dao_database.ChatbotWebhookAccessor,
+	logger *zap.Logger,
+) ProfileLogic {
+	return &profileLogic{
+		accountLogic:    accountLogic,
+		webhookAccessor: webhookAccessor,
+		logger:          logger,
+	}
+}
+
+// getAccountIdFromContext extracts the accountId set by the auth middleware.
+func getAccountIdFromContext(c *gin.Context, logger *zap.Logger) (uint64, bool) {
+	accountId, exists := c.Get("accountId")
+	if !exists || accountId.(uint64) == 0 {
+		errMsg := "accountId not existed in context"
+		logger.Error(errMsg)
+		c.JSON(http.StatusUnauthorized, oapi.Unauthorized{
+			Code:    "Unauthorized",
+			Message: errMsg,
+		})
+		return 0, false
+	}
+	return accountId.(uint64), true
+}
+
+func (u *profileLogic) GetProfileMe(c *gin.Context) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	account, err := u.accountLogic.GetAccount(c,
+		logic_account.GetAccountParams{
+			AccountId: accountId,
+		})
+	if err != nil {
+		errMsg := "failed to get account from account service"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, oapi.ProfileMeResponse{
+		Account: oapi.Account{
+			Username:    account.AccountInfo.Username,
+			Fullname:    account.AccountInfo.Fullname,
+			Email:       account.AccountInfo.Email,
+			PhoneNumber: utils.Ptr(oapi.PhoneNumber(account.AccountInfo.PhoneNumber)),
+			Role:        "member", // TODO: fill proper role with converters int <-> string
+		},
+	})
+}
+
+func (u *profileLogic) GetProfileWebhooks(c *gin.Context, params oapi.GetProfileWebhooksParams) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	limit := 20
+	offset := 0
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	webhooks, err := u.webhookAccessor.GetWebhooksByAccountId(c, accountId, limit, offset)
+	if err != nil {
+		errMsg := "failed to get webhooks"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	out := make([]oapi.Webhook, 0, len(webhooks))
+	for _, w := range webhooks {
+		out = append(out, oapi.Webhook{
+			Id:   utils.Ptr(int64(w.Id)),
+			Name: w.Name,
+			Url:  w.Url,
+		})
+	}
+
+	c.JSON(http.StatusOK, out)
+}
+
+func (u *profileLogic) CreateProfileWebhook(c *gin.Context) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	var req oapi.Webhook
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Error("invalid request body", zap.Error(err))
+		c.JSON(http.StatusBadRequest, oapi.BadRequest{
+			Code:    "BadRequest",
+			Message: "invalid request body",
+		})
+		return
+	}
+
+	id, err := u.webhookAccessor.CreateWebhook(c, dao_database.ChatbotWebhook{
+		OfAccountId: accountId,
+		Name:        req.Name,
+		Url:         req.Url,
+	})
+	if err != nil {
+		errMsg := "failed to create webhook"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	c.JSON(http.StatusCreated, oapi.Webhook{
+		Id:   utils.Ptr(int64(id)),
+		Name: req.Name,
+		Url:  req.Url,
+	})
+}
+
+func (u *profileLogic) GetProfileWebhook(c *gin.Context, webhookId oapi.WebhookId) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	webhook, err := u.webhookAccessor.GetWebhook(c, uint64(webhookId))
+	if err != nil {
+		errMsg := "webhook not found"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusNotFound, oapi.NotFound{
+			Code:    "NotFound",
+			Message: errMsg,
+		})
+		return
+	}
+
+	if webhook.OfAccountId != accountId {
+		c.JSON(http.StatusForbidden, oapi.Forbidden{
+			Code:    "Forbidden",
+			Message: "not allowed to access this webhook",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, oapi.Webhook{
+		Id:   utils.Ptr(int64(webhook.Id)),
+		Name: webhook.Name,
+		Url:  webhook.Url,
+	})
+}
+
+func (u *profileLogic) UpdateProfileWebhook(c *gin.Context, webhookId oapi.WebhookId) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	// Verify ownership
+	existing, err := u.webhookAccessor.GetWebhook(c, uint64(webhookId))
+	if err != nil {
+		c.JSON(http.StatusNotFound, oapi.NotFound{
+			Code:    "NotFound",
+			Message: "webhook not found",
+		})
+		return
+	}
+	if existing.OfAccountId != accountId {
+		c.JSON(http.StatusForbidden, oapi.Forbidden{
+			Code:    "Forbidden",
+			Message: "not allowed to access this webhook",
+		})
+		return
+	}
+
+	var req oapi.Webhook
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Error("invalid request body", zap.Error(err))
+		c.JSON(http.StatusBadRequest, oapi.BadRequest{
+			Code:    "BadRequest",
+			Message: "invalid request body",
+		})
+		return
+	}
+
+	err = u.webhookAccessor.UpdateWebhook(c, dao_database.ChatbotWebhook{
+		Id:   uint64(webhookId),
+		Name: req.Name,
+		Url:  req.Url,
+	})
+	if err != nil {
+		errMsg := "failed to update webhook"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, oapi.Webhook{
+		Id:   utils.Ptr(webhookId),
+		Name: req.Name,
+		Url:  req.Url,
+	})
+}
+
+func (u *profileLogic) DeleteProfileWebhook(c *gin.Context, webhookId oapi.WebhookId) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	// Verify ownership
+	existing, err := u.webhookAccessor.GetWebhook(c, uint64(webhookId))
+	if err != nil {
+		c.JSON(http.StatusNotFound, oapi.NotFound{
+			Code:    "NotFound",
+			Message: "webhook not found",
+		})
+		return
+	}
+	if existing.OfAccountId != accountId {
+		c.JSON(http.StatusForbidden, oapi.Forbidden{
+			Code:    "Forbidden",
+			Message: "not allowed to access this webhook",
+		})
+		return
+	}
+
+	err = u.webhookAccessor.DeleteWebhook(c, uint64(webhookId))
+	if err != nil {
+		errMsg := "failed to delete webhook"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}

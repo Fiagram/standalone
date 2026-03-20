@@ -106,7 +106,8 @@ test:
 				./test/dao/cache/redis \
 				./test/dao/database \
 				./test/logic/account \
-				./test/logic/token
+				./test/logic/token \
+				./test/logic/http
 
 .PHONY: lint
 lint:
