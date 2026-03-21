@@ -1,4 +1,4 @@
-package middlewares
+package handler
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func VerifyAccessToken(tokenLogic logic.Token) gin.HandlerFunc {
+func verifyAccessToken(tokenLogic logic.Token) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var token string
 
@@ -55,7 +55,7 @@ func VerifyAccessToken(tokenLogic logic.Token) gin.HandlerFunc {
 	}
 }
 
-func LogWithFormatter() gin.HandlerFunc {
+func logWithFormatter() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(
 		func(param gin.LogFormatterParams) string {
 			return fmt.Sprintf("%s - [%s] \"%s %s %s %d %s \"%s\" %s\"\n",

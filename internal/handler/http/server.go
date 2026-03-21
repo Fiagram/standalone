@@ -7,7 +7,6 @@ import (
 
 	"github.com/Fiagram/standalone/internal/configs"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
-	"github.com/Fiagram/standalone/internal/handler/middlewares"
 	"github.com/Fiagram/standalone/internal/logger"
 	auth_logic "github.com/Fiagram/standalone/internal/logic/http"
 	token_logic "github.com/Fiagram/standalone/internal/logic/token"
@@ -69,7 +68,7 @@ func (s *httpServer) Start(ctx context.Context) error {
 	public.POST("/auth/token/refresh", s.authLogic.RefreshToken)
 
 	authorized := r.Group("/api/v1",
-		middlewares.VerifyAccessToken(s.tokenLogic),
+		verifyAccessToken(s.tokenLogic),
 	)
 	authorized.GET("/profile/me", s.usersLogic.GetProfileMe)
 
