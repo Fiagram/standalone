@@ -4,24 +4,36 @@ import (
 	"context"
 	"fmt"
 
-	handler "github.com/Fiagram/standalone/internal/handler/http"
+	webhook_handler "github.com/Fiagram/standalone/internal/handler/chatbot"
+	http_handler "github.com/Fiagram/standalone/internal/handler/http"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module(
 	"handler",
 	fx.Provide(
-		handler.NewHttpServer,
+		http_handler.NewHttpServer,
+		webhook_handler.NewCreatedWebhookChan,
+		webhook_handler.NewWebhookServer,
 	),
 	fx.Invoke(
-		func(lc fx.Lifecycle, s handler.HttpServer) {
+		func(lc fx.Lifecycle,
+			hs http_handler.HttpServer,
+			ws webhook_handler.WebhookServer,
+		) {
+			var cancel context.CancelFunc
+
 			lc.Append(fx.Hook{
-				OnStart: func(ctx context.Context) error {
-					go s.Start(ctx)
+				OnStart: func(_ context.Context) error {
+					var ctx context.Context
+					ctx, cancel = context.WithCancel(context.Background())
+					go hs.Start(ctx)
+					go ws.Start(ctx)
 					return nil
 				},
-				OnStop: func(ctx context.Context) error {
+				OnStop: func(_ context.Context) error {
 					fmt.Println("Stopping server")
+					cancel()
 					return nil
 				},
 			})

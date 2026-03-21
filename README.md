@@ -20,6 +20,7 @@
 - [x] Integrate mock framework for automation testing
 - [x] Fixbug SQL injection when querying database directly
 - [x] Apply Docker for production releases
+- [ ] Refactor  the `invoke` function at `internal/handler/module.go` to receiver `profiders` automatically
 - [ ] (Tech debt) Fork and rewrite openapi to add `RegisterWith<middleware_names>Mids` intent to group middlewares for convenience
 
 # Introduction

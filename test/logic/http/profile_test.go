@@ -11,6 +11,7 @@ import (
 
 	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
+	webhook_handler "github.com/Fiagram/standalone/internal/handler/chatbot"
 	logic_account "github.com/Fiagram/standalone/internal/logic/account"
 	logic_http "github.com/Fiagram/standalone/internal/logic/http"
 	"github.com/gin-gonic/gin"
@@ -119,7 +120,8 @@ func newTestProfileLogic(
 	webhookAccessor dao_database.ChatbotWebhookAccessor,
 ) logic_http.ProfileLogic {
 	logger := zap.NewNop()
-	return logic_http.NewProfileLogic(accountLogic, webhookAccessor, logger)
+	signalCh := webhook_handler.NewCreatedWebhookChan()
+	return logic_http.NewProfileLogic(accountLogic, webhookAccessor, signalCh, logger)
 }
 
 // newGinContext creates a gin.Context backed by httptest for the given method, path, and optional body.
