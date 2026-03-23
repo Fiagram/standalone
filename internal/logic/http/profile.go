@@ -15,6 +15,8 @@ import (
 
 type ProfileLogic interface {
 	GetProfileMe(c *gin.Context)
+	UpdateProfileMe(c *gin.Context)
+	UpdateProfilePassword(c *gin.Context)
 
 	GetProfileWebhooks(c *gin.Context, params oapi.GetProfileWebhooksParams)
 	CreateProfileWebhook(c *gin.Context)
@@ -106,6 +108,170 @@ func (u *profileLogic) GetProfileMe(c *gin.Context) {
 			Role:        oapi.Role(accountRole.Name),
 		},
 	})
+}
+
+func (u *profileLogic) UpdateProfileMe(c *gin.Context) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	var req oapi.UpdateProfileMeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Error("invalid request body", zap.Error(err))
+		c.JSON(http.StatusBadRequest, oapi.BadRequest{
+			Code:    "BadRequest",
+			Message: "invalid request body",
+		})
+		return
+	}
+
+	// Fetch the current account to merge partial updates
+	account, err := u.accountLogic.GetAccount(c,
+		logic_account.GetAccountParams{
+			AccountId: accountId,
+		})
+	if err != nil {
+		errMsg := "failed to get account"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	updatedInfo := account.AccountInfo
+	if req.Fullname != nil {
+		updatedInfo.Fullname = *req.Fullname
+	}
+	if req.Email != nil {
+		updatedInfo.Email = *req.Email
+	}
+	if req.PhoneNumber != nil {
+		updatedInfo.PhoneNumber = *req.PhoneNumber
+	}
+
+	_, err = u.accountLogic.UpdateAccountInfo(c,
+		logic_account.UpdateAccountInfoParams{
+			AccountId:          accountId,
+			UpdatedAccountInfo: updatedInfo,
+		})
+	if err != nil {
+		errMsg := "failed to update account info"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	accountRole, err := u.accountRoleAccessor.GetRoleById(c, uint8(updatedInfo.Role))
+	if err != nil {
+		errMsg := "failed to get account role from database"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, oapi.ProfileMeResponse{
+		Account: oapi.Account{
+			Username:    updatedInfo.Username,
+			Fullname:    updatedInfo.Fullname,
+			Email:       updatedInfo.Email,
+			PhoneNumber: &updatedInfo.PhoneNumber,
+			Role:        oapi.Role(accountRole.Name),
+		},
+	})
+}
+
+func (u *profileLogic) UpdateProfilePassword(c *gin.Context) {
+	logger := logger.LoggerWithContext(c, u.logger)
+
+	accountId, ok := getAccountIdFromContext(c, logger)
+	if !ok {
+		return
+	}
+
+	var req oapi.UpdatePasswordRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		logger.Error("invalid request body", zap.Error(err))
+		c.JSON(http.StatusBadRequest, oapi.BadRequest{
+			Code:    "BadRequest",
+			Message: "invalid request body",
+		})
+		return
+	}
+
+	if req.OldPassword == nil || req.NewPassword == nil {
+		c.JSON(http.StatusBadRequest, oapi.BadRequest{
+			Code:    "BadRequest",
+			Message: "oldPassword and newPassword are required",
+		})
+		return
+	}
+
+	// Fetch account to get username for credential validation
+	account, err := u.accountLogic.GetAccount(c,
+		logic_account.GetAccountParams{
+			AccountId: accountId,
+		})
+	if err != nil {
+		errMsg := "failed to get account"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	// Verify old password
+	validResult, err := u.accountLogic.CheckAccountValid(c,
+		logic_account.CheckAccountValidParams{
+			Username: account.AccountInfo.Username,
+			Password: *req.OldPassword,
+		})
+	if err != nil {
+		errMsg := "failed to validate old password"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+	if validResult.AccountId == 0 {
+		c.JSON(http.StatusForbidden, oapi.Forbidden{
+			Code:    "Forbidden",
+			Message: "old password is incorrect",
+		})
+		return
+	}
+
+	// Update to new password
+	_, err = u.accountLogic.UpdateAccountPassword(c,
+		logic_account.UpdateAccountPasswordParams{
+			AccountId: accountId,
+			Password:  *req.NewPassword,
+		})
+	if err != nil {
+		errMsg := "failed to update password"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
 func (u *profileLogic) GetProfileWebhooks(c *gin.Context, params oapi.GetProfileWebhooksParams) {

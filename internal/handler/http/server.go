@@ -71,6 +71,8 @@ func (s *httpServer) Start(ctx context.Context) error {
 		verifyAccessToken(s.tokenLogic),
 	)
 	authorized.GET("/profile/me", s.usersLogic.GetProfileMe)
+	authorized.PUT("/profile/me", s.usersLogic.UpdateProfileMe)
+	authorized.PUT("/profile/me/password", s.usersLogic.UpdateProfilePassword)
 
 	authorized.GET("/profile/webhooks", func(c *gin.Context) {
 		var params oapi.GetProfileWebhooksParams

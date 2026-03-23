@@ -130,6 +130,26 @@ type SignupResponse struct {
 	Account     Account             `json:"account"`
 }
 
+// UpdatePasswordRequest defines model for UpdatePasswordRequest.
+type UpdatePasswordRequest struct {
+	// NewPassword 8-72 characters, including at least one uppercase,
+	// one lowercase, one digit, and one special character; no whitespace.
+	NewPassword *Password `json:"newPassword,omitempty"`
+
+	// OldPassword 8-72 characters, including at least one uppercase,
+	// one lowercase, one digit, and one special character; no whitespace.
+	OldPassword *Password `json:"oldPassword,omitempty"`
+}
+
+// UpdateProfileMeRequest defines model for UpdateProfileMeRequest.
+type UpdateProfileMeRequest struct {
+	Email    *Email    `json:"email,omitempty"`
+	Fullname *Fullname `json:"fullname,omitempty"`
+
+	// PhoneNumber the phone number of a created account
+	PhoneNumber *PhoneNumber `json:"phoneNumber,omitempty"`
+}
+
 // Username 5–20 characters; letters and numbers required;
 // optional single dots or underscores allowed between characters;
 // cannot start or end with dot/underscore; no consecutive dots or underscores.
@@ -185,6 +205,12 @@ type SignInJSONRequestBody = SigninRequest
 // SignUpJSONRequestBody defines body for SignUp for application/json ContentType.
 type SignUpJSONRequestBody = SignupRequest
 
+// UpdateProfileMeJSONRequestBody defines body for UpdateProfileMe for application/json ContentType.
+type UpdateProfileMeJSONRequestBody = UpdateProfileMeRequest
+
+// UpdateProfilePasswordJSONRequestBody defines body for UpdateProfilePassword for application/json ContentType.
+type UpdateProfilePasswordJSONRequestBody = UpdatePasswordRequest
+
 // CreateProfileWebhookJSONRequestBody defines body for CreateProfileWebhook for application/json ContentType.
 type CreateProfileWebhookJSONRequestBody = Webhook
 
@@ -208,7 +234,13 @@ type ServerInterface interface {
 	// Get current account information
 	// (GET /profile/me)
 	GetProfileMe(c *gin.Context)
-	// List current user's webhooks
+	// Update current account information
+	// (PUT /profile/me)
+	UpdateProfileMe(c *gin.Context)
+	// Update current account password
+	// (PUT /profile/me/password)
+	UpdateProfilePassword(c *gin.Context)
+	// List the account's webhooks
 	// (GET /profile/webhooks)
 	GetProfileWebhooks(c *gin.Context, params GetProfileWebhooksParams)
 	// Create a new webhook
@@ -303,6 +335,36 @@ func (siw *ServerInterfaceWrapper) GetProfileMe(c *gin.Context) {
 	}
 
 	siw.Handler.GetProfileMe(c)
+}
+
+// UpdateProfileMe operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProfileMe(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateProfileMe(c)
+}
+
+// UpdateProfilePassword operation middleware
+func (siw *ServerInterfaceWrapper) UpdateProfilePassword(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateProfilePassword(c)
 }
 
 // GetProfileWebhooks operation middleware
@@ -466,6 +528,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/auth/token/refresh", wrapper.RefreshToken)
 	router.POST(options.BaseURL+"/auth/token/signout", wrapper.SignOut)
 	router.GET(options.BaseURL+"/profile/me", wrapper.GetProfileMe)
+	router.PUT(options.BaseURL+"/profile/me", wrapper.UpdateProfileMe)
+	router.PUT(options.BaseURL+"/profile/me/password", wrapper.UpdateProfilePassword)
 	router.GET(options.BaseURL+"/profile/webhooks", wrapper.GetProfileWebhooks)
 	router.POST(options.BaseURL+"/profile/webhooks", wrapper.CreateProfileWebhook)
 	router.DELETE(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.DeleteProfileWebhook)
