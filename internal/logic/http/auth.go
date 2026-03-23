@@ -6,6 +6,7 @@ import (
 
 	"github.com/Fiagram/standalone/internal/configs"
 	dao_cache "github.com/Fiagram/standalone/internal/dao/cache"
+	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
 	"github.com/Fiagram/standalone/internal/logger"
 	logic_account "github.com/Fiagram/standalone/internal/logic/account"
@@ -27,6 +28,7 @@ var _ AuthLogic = (oapi.ServerInterface)(nil)
 type authLogic struct {
 	authConfig          configs.Auth
 	cookieConfig        configs.Cookie
+	accountRoleAsor     dao_database.AccountRoleAccessor
 	usernamesTakenCache dao_cache.UsernamesTaken
 	refreshTokenCache   dao_cache.RefreshToken
 	accountLogic        logic_account.Account
@@ -37,6 +39,7 @@ type authLogic struct {
 func NewAuthLogic(
 	authConfig configs.Auth,
 	cookieConfig configs.Cookie,
+	accountRoleAsor dao_database.AccountRoleAccessor,
 	usernamesTakenCache dao_cache.UsernamesTaken,
 	refreshTokenCache dao_cache.RefreshToken,
 	accountLogic logic_account.Account,
@@ -46,6 +49,7 @@ func NewAuthLogic(
 	return &authLogic{
 		authConfig:          authConfig,
 		cookieConfig:        cookieConfig,
+		accountRoleAsor:     accountRoleAsor,
 		usernamesTakenCache: usernamesTakenCache,
 		refreshTokenCache:   refreshTokenCache,
 		accountLogic:        accountLogic,
@@ -276,11 +280,11 @@ func (o *authLogic) SignIn(c *gin.Context) {
 			Exp:   accessTokenExpiresAt.Unix(),
 		},
 		Account: oapi.Account{
-			Username: username,
-			Fullname: account.AccountInfo.Fullname,
-			Email:    account.AccountInfo.Email,
+			Username:    username,
+			Fullname:    account.AccountInfo.Fullname,
+			Email:       account.AccountInfo.Email,
 			PhoneNumber: utils.Ptr(oapi.PhoneNumber(account.AccountInfo.PhoneNumber)),
-			Role: "member",
+			Role:        "member",
 		},
 	})
 }
@@ -448,6 +452,17 @@ func (o *authLogic) SignUp(c *gin.Context) {
 		SameSite: o.cookieConfig.SameSite(),
 	})
 
+	accountRole, err := o.accountRoleAsor.GetRoleByAccountId(c, accResp.AccountId)
+	if err != nil {
+		errMsg := "failed to get account role from database"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
 	// Return the access token to the response
 	c.JSON(http.StatusOK, oapi.SignupResponse{
 		AccessToken: oapi.AccessTokenResponse{
@@ -455,11 +470,11 @@ func (o *authLogic) SignUp(c *gin.Context) {
 			Exp:   accessTokenExpiresAt.Unix(),
 		},
 		Account: oapi.Account{
-			Username: username,
-			Fullname: req.Account.Fullname,
-			Email:    req.Account.Email,
+			Username:    username,
+			Fullname:    req.Account.Fullname,
+			Email:       req.Account.Email,
 			PhoneNumber: req.Account.PhoneNumber,
-			Role: "member",
+			Role:        oapi.Role(accountRole.Name),
 		},
 	})
 }

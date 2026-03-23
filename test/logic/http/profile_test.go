@@ -108,6 +108,38 @@ func (m *mockWebhookAccessor) WithExecutor(_ dao_database.Executor) dao_database
 }
 
 // ---------------------------------------------------------------------------
+// Mock: dao_database.AccountRoleAccessor
+// ---------------------------------------------------------------------------
+
+type mockAccountRoleAccessor struct {
+	getRoleByIdFn        func(ctx context.Context, id uint8) (dao_database.AccountRole, error)
+	getRoleByNameFn      func(ctx context.Context, name string) (dao_database.AccountRole, error)
+	getRoleByAccountIdFn func(ctx context.Context, accountId uint64) (dao_database.AccountRole, error)
+}
+
+func (m *mockAccountRoleAccessor) GetRoleById(ctx context.Context, id uint8) (dao_database.AccountRole, error) {
+	if m.getRoleByIdFn != nil {
+		return m.getRoleByIdFn(ctx, id)
+	}
+	return dao_database.AccountRole{}, nil
+}
+func (m *mockAccountRoleAccessor) GetRoleByName(ctx context.Context, name string) (dao_database.AccountRole, error) {
+	if m.getRoleByNameFn != nil {
+		return m.getRoleByNameFn(ctx, name)
+	}
+	return dao_database.AccountRole{}, nil
+}
+func (m *mockAccountRoleAccessor) GetRoleByAccountId(ctx context.Context, accountId uint64) (dao_database.AccountRole, error) {
+	if m.getRoleByAccountIdFn != nil {
+		return m.getRoleByAccountIdFn(ctx, accountId)
+	}
+	return dao_database.AccountRole{}, nil
+}
+func (m *mockAccountRoleAccessor) WithExecutor(_ dao_database.Executor) dao_database.AccountRoleAccessor {
+	return m
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -118,10 +150,16 @@ func init() {
 func newTestProfileLogic(
 	accountLogic logic_account.Account,
 	webhookAccessor dao_database.ChatbotWebhookAccessor,
+	accountRoleAccessor dao_database.AccountRoleAccessor,
 ) logic_http.ProfileLogic {
 	logger := zap.NewNop()
 	signalCh := webhook_handler.NewCreatedWebhookChan()
-	return logic_http.NewProfileLogic(accountLogic, webhookAccessor, signalCh, logger)
+
+	if accountRoleAccessor == nil {
+		accountRoleAccessor = &mockAccountRoleAccessor{}
+	}
+
+	return logic_http.NewProfileLogic(webhookAccessor, accountRoleAccessor, signalCh, accountLogic, logger)
 }
 
 // newGinContext creates a gin.Context backed by httptest for the given method, path, and optional body.
@@ -166,7 +204,13 @@ func TestGetProfileMe_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{})
+	roleAccessor := &mockAccountRoleAccessor{
+		getRoleByIdFn: func(_ context.Context, id uint8) (dao_database.AccountRole, error) {
+			require.Equal(t, uint8(logic_account.Member), id)
+			return dao_database.AccountRole{Id: id, Name: "member"}, nil
+		},
+	}
+	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{}, roleAccessor)
 
 	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
 	setAccountId(c, 42)
@@ -180,10 +224,11 @@ func TestGetProfileMe_Success(t *testing.T) {
 	require.Equal(t, "johndoe", resp.Account.Username)
 	require.Equal(t, "John Doe", resp.Account.Fullname)
 	require.Equal(t, "john@example.com", resp.Account.Email)
+	require.Equal(t, oapi.Role("member"), resp.Account.Role)
 }
 
 func TestGetProfileMe_NoAccountId(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
 	// Do NOT set accountId
@@ -198,7 +243,30 @@ func TestGetProfileMe_AccountLogicError(t *testing.T) {
 			return logic_account.GetAccountOutput{}, errors.New("db down")
 		},
 	}
-	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{}, nil)
+
+	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
+	setAccountId(c, 1)
+	pl.GetProfileMe(c)
+
+	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestGetProfileMe_RoleAccessorError(t *testing.T) {
+	acctLogic := &mockAccountLogic{
+		getAccountFn: func(_ context.Context, _ logic_account.GetAccountParams) (logic_account.GetAccountOutput, error) {
+			return logic_account.GetAccountOutput{
+				AccountId:   1,
+				AccountInfo: logic_account.AccountInfo{Role: logic_account.Member},
+			}, nil
+		},
+	}
+	roleAccessor := &mockAccountRoleAccessor{
+		getRoleByIdFn: func(_ context.Context, _ uint8) (dao_database.AccountRole, error) {
+			return dao_database.AccountRole{}, errors.New("role lookup failed")
+		},
+	}
+	pl := newTestProfileLogic(acctLogic, &mockWebhookAccessor{}, roleAccessor)
 
 	c, w := newGinContext(http.MethodGet, "/profile/me", nil)
 	setAccountId(c, 1)
@@ -223,7 +291,7 @@ func TestGetProfileWebhooks_Success_Defaults(t *testing.T) {
 			}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
 	setAccountId(c, 10)
@@ -249,7 +317,7 @@ func TestGetProfileWebhooks_CustomLimitOffset(t *testing.T) {
 			return nil, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks?limit=5&offset=10", nil)
 	setAccountId(c, 1)
@@ -262,7 +330,7 @@ func TestGetProfileWebhooks_CustomLimitOffset(t *testing.T) {
 }
 
 func TestGetProfileWebhooks_NoAccountId(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
 	pl.GetProfileWebhooks(c, oapi.GetProfileWebhooksParams{})
@@ -276,7 +344,7 @@ func TestGetProfileWebhooks_AccessorError(t *testing.T) {
 			return nil, errors.New("query failed")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
 	setAccountId(c, 1)
@@ -291,7 +359,7 @@ func TestGetProfileWebhooks_Empty(t *testing.T) {
 			return []dao_database.ChatbotWebhook{}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks", nil)
 	setAccountId(c, 1)
@@ -318,7 +386,7 @@ func TestCreateProfileWebhook_Success(t *testing.T) {
 			return 99, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	body := oapi.Webhook{Name: "my-hook", Url: "https://example.com/hook"}
 	c, w := newGinContext(http.MethodPost, "/profile/webhooks", body)
@@ -337,7 +405,7 @@ func TestCreateProfileWebhook_Success(t *testing.T) {
 }
 
 func TestCreateProfileWebhook_NoAccountId(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	body := oapi.Webhook{Name: "h", Url: "http://x.com"}
 	c, w := newGinContext(http.MethodPost, "/profile/webhooks", body)
@@ -347,7 +415,7 @@ func TestCreateProfileWebhook_NoAccountId(t *testing.T) {
 }
 
 func TestCreateProfileWebhook_InvalidBody(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	// Send invalid JSON (string instead of object)
 	w := httptest.NewRecorder()
@@ -367,7 +435,7 @@ func TestCreateProfileWebhook_AccessorError(t *testing.T) {
 			return 0, errors.New("duplicate entry")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	body := oapi.Webhook{Name: "dup", Url: "http://x.com"}
 	c, w := newGinContext(http.MethodPost, "/profile/webhooks", body)
@@ -390,7 +458,7 @@ func TestGetProfileWebhook_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks/55", nil)
 	setAccountId(c, 3)
@@ -407,7 +475,7 @@ func TestGetProfileWebhook_Success(t *testing.T) {
 }
 
 func TestGetProfileWebhook_NoAccountId(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks/1", nil)
 	pl.GetProfileWebhook(c, 1)
@@ -421,7 +489,7 @@ func TestGetProfileWebhook_NotFound(t *testing.T) {
 			return dao_database.ChatbotWebhook{}, errors.New("sql: no rows")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks/999", nil)
 	setAccountId(c, 1)
@@ -438,7 +506,7 @@ func TestGetProfileWebhook_Forbidden(t *testing.T) {
 			}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodGet, "/profile/webhooks/10", nil)
 	setAccountId(c, 1) // different from OfAccountId=99
@@ -465,7 +533,7 @@ func TestUpdateProfileWebhook_Success(t *testing.T) {
 			return nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	body := oapi.Webhook{Name: "new-name", Url: "https://new.com"}
 	c, w := newGinContext(http.MethodPut, "/profile/webhooks/20", body)
@@ -484,7 +552,7 @@ func TestUpdateProfileWebhook_Success(t *testing.T) {
 }
 
 func TestUpdateProfileWebhook_NoAccountId(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
 	c, w := newGinContext(http.MethodPut, "/profile/webhooks/1", body)
@@ -499,7 +567,7 @@ func TestUpdateProfileWebhook_NotFound(t *testing.T) {
 			return dao_database.ChatbotWebhook{}, errors.New("not found")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
 	c, w := newGinContext(http.MethodPut, "/profile/webhooks/999", body)
@@ -517,7 +585,7 @@ func TestUpdateProfileWebhook_Forbidden(t *testing.T) {
 			}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
 	c, w := newGinContext(http.MethodPut, "/profile/webhooks/10", body)
@@ -533,7 +601,7 @@ func TestUpdateProfileWebhook_InvalidBody(t *testing.T) {
 			return dao_database.ChatbotWebhook{Id: 1, OfAccountId: 1}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
@@ -555,7 +623,7 @@ func TestUpdateProfileWebhook_AccessorError(t *testing.T) {
 			return errors.New("db error")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	body := oapi.Webhook{Name: "x", Url: "http://x.com"}
 	c, w := newGinContext(http.MethodPut, "/profile/webhooks/1", body)
@@ -581,7 +649,7 @@ func TestDeleteProfileWebhook_Success(t *testing.T) {
 			return nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, _ := newGinContext(http.MethodDelete, "/profile/webhooks/30", nil)
 	setAccountId(c, 8)
@@ -594,7 +662,7 @@ func TestDeleteProfileWebhook_Success(t *testing.T) {
 }
 
 func TestDeleteProfileWebhook_NoAccountId(t *testing.T) {
-	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{})
+	pl := newTestProfileLogic(&mockAccountLogic{}, &mockWebhookAccessor{}, nil)
 
 	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/1", nil)
 	pl.DeleteProfileWebhook(c, 1)
@@ -608,7 +676,7 @@ func TestDeleteProfileWebhook_NotFound(t *testing.T) {
 			return dao_database.ChatbotWebhook{}, errors.New("not found")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/999", nil)
 	setAccountId(c, 1)
@@ -625,7 +693,7 @@ func TestDeleteProfileWebhook_Forbidden(t *testing.T) {
 			}, nil
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/10", nil)
 	setAccountId(c, 1) // not 99
@@ -643,7 +711,7 @@ func TestDeleteProfileWebhook_AccessorError(t *testing.T) {
 			return errors.New("db error")
 		},
 	}
-	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc)
+	pl := newTestProfileLogic(&mockAccountLogic{}, webhookAcc, nil)
 
 	c, w := newGinContext(http.MethodDelete, "/profile/webhooks/1", nil)
 	setAccountId(c, 1)

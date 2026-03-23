@@ -131,3 +131,62 @@ func TestGetAllSeededRoles(t *testing.T) {
 		require.Equal(t, expected.name, arById.Name)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// Tests: GetRoleByAccountId
+// ---------------------------------------------------------------------------
+
+func TestGetRoleByAccountId_Member(t *testing.T) {
+	ctx := context.Background()
+	accAsor := dao_database.NewAccountAccessor(sqlDb, logger)
+	roleAsor := dao_database.NewAccountRoleAccessor(sqlDb, logger)
+
+	input := RandomAccount() // RoleId defaults to 2 (member)
+	id, err := accAsor.CreateAccount(ctx, input)
+	require.NoError(t, err)
+	require.NotZero(t, id)
+
+	ar, err := roleAsor.GetRoleByAccountId(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, uint8(2), ar.Id)
+	require.Equal(t, "member", ar.Name)
+
+	errD := accAsor.DeleteAccount(ctx, id)
+	require.NoError(t, errD)
+}
+
+func TestGetRoleByAccountId_Admin(t *testing.T) {
+	ctx := context.Background()
+	accAsor := dao_database.NewAccountAccessor(sqlDb, logger)
+	roleAsor := dao_database.NewAccountRoleAccessor(sqlDb, logger)
+
+	input := RandomAccount()
+	input.RoleId = 1 // admin
+	id, err := accAsor.CreateAccount(ctx, input)
+	require.NoError(t, err)
+	require.NotZero(t, id)
+
+	ar, err := roleAsor.GetRoleByAccountId(ctx, id)
+	require.NoError(t, err)
+	require.Equal(t, uint8(1), ar.Id)
+	require.Equal(t, "admin", ar.Name)
+
+	errD := accAsor.DeleteAccount(ctx, id)
+	require.NoError(t, errD)
+}
+
+func TestGetRoleByAccountId_Zero(t *testing.T) {
+	roleAsor := dao_database.NewAccountRoleAccessor(sqlDb, logger)
+	_, err := roleAsor.GetRoleByAccountId(context.Background(), 0)
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, dao_database.ErrLackOfInfor)
+}
+
+func TestGetRoleByAccountId_NotFound(t *testing.T) {
+	roleAsor := dao_database.NewAccountRoleAccessor(sqlDb, logger)
+	_, err := roleAsor.GetRoleByAccountId(context.Background(), 999999999)
+
+	require.Error(t, err)
+	require.ErrorIs(t, err, dao_database.ErrAccRoleNotFound)
+}

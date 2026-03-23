@@ -19,6 +19,7 @@ var accountRoleCache accountRoleList
 type AccountRoleAccessor interface {
 	GetRoleById(ctx context.Context, id uint8) (AccountRole, error)
 	GetRoleByName(ctx context.Context, name string) (AccountRole, error)
+	GetRoleByAccountId(ctx context.Context, accountId uint64) (AccountRole, error)
 	WithExecutor(exec Executor) AccountRoleAccessor
 }
 
@@ -109,6 +110,32 @@ func (a accountRoleAccessor) GetRoleByName(
 	}
 	logger.With(zap.Error(ErrAccRoleNotFound))
 	return AccountRole{}, ErrAccRoleNotFound
+}
+
+func (a accountRoleAccessor) GetRoleByAccountId(
+	ctx context.Context,
+	accountId uint64,
+) (AccountRole, error) {
+	logger := logger.LoggerWithContext(ctx, a.logger).With(zap.Any("account_id", accountId))
+
+	if accountId == 0 {
+		return AccountRole{}, ErrLackOfInfor
+	}
+
+	const query = `
+		SELECT ar.id, ar.name
+		FROM account_role ar
+		JOIN accounts a ON a.of_role_id = ar.id
+		WHERE a.id = ?`
+
+	var role AccountRole
+	err := a.exec.QueryRowContext(ctx, query, accountId).Scan(&role.Id, &role.Name)
+	if err != nil {
+		logger.With(zap.Error(err)).Error("failed to get role by account id")
+		return AccountRole{}, ErrAccRoleNotFound
+	}
+
+	return role, nil
 }
 
 func (a accountRoleAccessor) WithExecutor(

@@ -26,23 +26,26 @@ type ProfileLogic interface {
 var _ ProfileLogic = (oapi.ServerInterface)(nil)
 
 type profileLogic struct {
-	accountLogic       logic_account.Account
-	webhookAccessor    dao_database.ChatbotWebhookAccessor
-	createdWebhookChan webhook_handler.CreatedWebhookChan
-	logger             *zap.Logger
+	webhookAccessor     dao_database.ChatbotWebhookAccessor
+	accountRoleAccessor dao_database.AccountRoleAccessor
+	createdWebhookChan  webhook_handler.CreatedWebhookChan
+	accountLogic        logic_account.Account
+	logger              *zap.Logger
 }
 
 func NewProfileLogic(
-	accountLogic logic_account.Account,
 	webhookAccessor dao_database.ChatbotWebhookAccessor,
+	accountRoleAccessor dao_database.AccountRoleAccessor,
 	createdWebhookChan webhook_handler.CreatedWebhookChan,
+	accountLogic logic_account.Account,
 	logger *zap.Logger,
 ) ProfileLogic {
 	return &profileLogic{
-		accountLogic:       accountLogic,
-		webhookAccessor:    webhookAccessor,
-		createdWebhookChan: createdWebhookChan,
-		logger:             logger,
+		webhookAccessor:     webhookAccessor,
+		accountRoleAccessor: accountRoleAccessor,
+		createdWebhookChan:  createdWebhookChan,
+		accountLogic:        accountLogic,
+		logger:              logger,
 	}
 }
 
@@ -83,13 +86,24 @@ func (u *profileLogic) GetProfileMe(c *gin.Context) {
 		return
 	}
 
+	accountRole, err := u.accountRoleAccessor.GetRoleById(c, uint8(account.AccountInfo.Role))
+	if err != nil {
+		errMsg := "failed to get account role from database"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
 	c.JSON(http.StatusOK, oapi.ProfileMeResponse{
 		Account: oapi.Account{
 			Username:    account.AccountInfo.Username,
 			Fullname:    account.AccountInfo.Fullname,
 			Email:       account.AccountInfo.Email,
-			PhoneNumber: utils.Ptr(oapi.PhoneNumber(account.AccountInfo.PhoneNumber)),
-			Role:        "member", // TODO: fill proper role with converters int <-> string
+			PhoneNumber: &account.AccountInfo.PhoneNumber,
+			Role:        oapi.Role(accountRole.Name),
 		},
 	})
 }
