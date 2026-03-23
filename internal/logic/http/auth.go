@@ -273,6 +273,17 @@ func (o *authLogic) SignIn(c *gin.Context) {
 		SameSite: o.cookieConfig.SameSite(),
 	})
 
+	accountRole, err := o.accountRoleAsor.GetRoleByAccountId(c, validResp.AccountId)
+	if err != nil {
+		errMsg := "failed to get account role from database"
+		logger.Error(errMsg, zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: errMsg,
+		})
+		return
+	}
+
 	// Return the access token to the response
 	c.JSON(http.StatusOK, oapi.SigninResponse{
 		AccessToken: oapi.AccessTokenResponse{
@@ -284,7 +295,7 @@ func (o *authLogic) SignIn(c *gin.Context) {
 			Fullname:    account.AccountInfo.Fullname,
 			Email:       account.AccountInfo.Email,
 			PhoneNumber: utils.Ptr(oapi.PhoneNumber(account.AccountInfo.PhoneNumber)),
-			Role:        "member",
+			Role:        oapi.Role(accountRole.Name),
 		},
 	})
 }
