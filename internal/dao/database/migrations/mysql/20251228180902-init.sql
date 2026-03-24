@@ -17,9 +17,9 @@ CREATE TABLE IF NOT EXISTS accounts (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    FOREIGN KEY (of_role_id) REFERENCES account_role(id),
-    UNIQUE (username),
-    UNIQUE (email)
+    CONSTRAINT udx_accounts_username UNIQUE (username),
+    CONSTRAINT udx_accounts_email UNIQUE (email),
+    CONSTRAINT fk_accounts_of_role_id FOREIGN KEY (of_role_id) REFERENCES account_role(id)
 );
 
 CREATE TABLE IF NOT EXISTS account_passwords (
@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS chatbot_webhooks (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     PRIMARY KEY (id),
-    FOREIGN KEY (of_account_id) REFERENCES accounts(id),
-    UNIQUE (of_account_id, name)
+    CONSTRAINT fk_chatbot_webhooks_of_account_id FOREIGN KEY (of_account_id) REFERENCES accounts(id),
+    CONSTRAINT udx_chatbot_webhooks_of_account_id_name UNIQUE (of_account_id, name)
 );
 
 INSERT INTO account_role (id, name) VALUES (0, 'none');
