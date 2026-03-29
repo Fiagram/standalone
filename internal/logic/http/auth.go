@@ -371,10 +371,10 @@ func (o *authLogic) SignUp(c *gin.Context) {
 			Username: username,
 		})
 	if err != nil {
-		logger.With(zap.Error(err)).Error("failed to call grpc method")
+		logger.With(zap.Error(err)).Error("failed to check username taken")
 		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
 			Code:    "InternalServerError",
-			Message: "failed to call grpc method",
+			Message: "failed to check username taken",
 		})
 		return
 	}
@@ -405,7 +405,7 @@ func (o *authLogic) SignUp(c *gin.Context) {
 	if err != nil || accResp.AccountId == 0 {
 		c.JSON(http.StatusBadRequest, oapi.BadRequest{
 			Code:    "BadRequest",
-			Message: "failed to process grpc method",
+			Message: "failed to create account",
 		})
 		return
 	}
@@ -415,7 +415,7 @@ func (o *authLogic) SignUp(c *gin.Context) {
 		AccountId: accResp.AccountId,
 	})
 	if err != nil {
-		errMsg := "failed to gen access token"
+		errMsg := "failed to generate access token"
 		logger.With(zap.Error(err)).Error(errMsg)
 		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
 			Code:    "InternalServerError",
@@ -427,7 +427,7 @@ func (o *authLogic) SignUp(c *gin.Context) {
 	// Create refresh token
 	refreshToken, refreshTokenExpiresAt, err := o.tokenLogic.GenerateRefreshToken(c)
 	if err != nil {
-		errMsg := "failed to gen refresh token"
+		errMsg := "failed to generate refresh token"
 		logger.With(zap.Error(err)).Error(errMsg)
 		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
 			Code:    "InternalServerError",

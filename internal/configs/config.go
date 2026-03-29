@@ -12,6 +12,7 @@ type ConfigFilePath string
 
 type Config struct {
 	Http           Http           `yaml:"http"`
+	MessageQueue   MessageQueue   `yaml:"message_queue"`
 	Auth           Auth           `yaml:"auth"`
 	Log            Log            `yaml:"log"`
 	CacheClient    CacheClient    `yaml:"cache_client"`

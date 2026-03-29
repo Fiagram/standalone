@@ -1,4 +1,4 @@
-package handler
+package logic_chatbot
 
 type CreatedWebhookSignal struct {
 	OfWebhookId uint64
@@ -7,5 +7,5 @@ type CreatedWebhookSignal struct {
 type CreatedWebhookChan chan CreatedWebhookSignal
 
 func NewCreatedWebhookChan() CreatedWebhookChan {
-	return make(CreatedWebhookChan, 100)
+	return make(CreatedWebhookChan, 20)
 }

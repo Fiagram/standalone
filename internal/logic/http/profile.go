@@ -5,9 +5,9 @@ import (
 
 	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
-	webhook_handler "github.com/Fiagram/standalone/internal/handler/chatbot"
 	"github.com/Fiagram/standalone/internal/logger"
 	logic_account "github.com/Fiagram/standalone/internal/logic/account"
+	logic_chatbot "github.com/Fiagram/standalone/internal/logic/chatbot"
 	"github.com/Fiagram/standalone/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -30,7 +30,7 @@ var _ ProfileLogic = (oapi.ServerInterface)(nil)
 type profileLogic struct {
 	webhookAccessor     dao_database.ChatbotWebhookAccessor
 	accountRoleAccessor dao_database.AccountRoleAccessor
-	createdWebhookChan  webhook_handler.CreatedWebhookChan
+	createdWebhookChan  logic_chatbot.CreatedWebhookChan
 	accountLogic        logic_account.Account
 	logger              *zap.Logger
 }
@@ -38,7 +38,7 @@ type profileLogic struct {
 func NewProfileLogic(
 	webhookAccessor dao_database.ChatbotWebhookAccessor,
 	accountRoleAccessor dao_database.AccountRoleAccessor,
-	createdWebhookChan webhook_handler.CreatedWebhookChan,
+	createdWebhookChan logic_chatbot.CreatedWebhookChan,
 	accountLogic logic_account.Account,
 	logger *zap.Logger,
 ) ProfileLogic {
@@ -347,7 +347,7 @@ func (u *profileLogic) CreateProfileWebhook(c *gin.Context) {
 		return
 	}
 
-	u.createdWebhookChan <- webhook_handler.CreatedWebhookSignal{
+	u.createdWebhookChan <- logic_chatbot.CreatedWebhookSignal{
 		OfWebhookId: id,
 	}
 

@@ -29,6 +29,11 @@ http:
     secure: true
     httpOnly: true
 
+message_queue:
+  addresses:
+    - 127.0.0.1:9092
+  clientID: standalone
+
 auth:
   hash:
     cost: 10

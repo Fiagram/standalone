@@ -5,7 +5,9 @@ import (
 	"fmt"
 
 	webhook_handler "github.com/Fiagram/standalone/internal/handler/chatbot"
+	consumer_handler "github.com/Fiagram/standalone/internal/handler/consumer"
 	http_handler "github.com/Fiagram/standalone/internal/handler/http"
+
 	"go.uber.org/fx"
 )
 
@@ -13,13 +15,14 @@ var Module = fx.Module(
 	"handler",
 	fx.Provide(
 		http_handler.NewHttpServer,
-		webhook_handler.NewCreatedWebhookChan,
 		webhook_handler.NewWebhookServer,
+		consumer_handler.NewConsumer,
 	),
 	fx.Invoke(
 		func(lc fx.Lifecycle,
 			hs http_handler.HttpServer,
 			ws webhook_handler.WebhookServer,
+			ts consumer_handler.Consumer,
 		) {
 			var cancel context.CancelFunc
 
@@ -27,8 +30,11 @@ var Module = fx.Module(
 				OnStart: func(_ context.Context) error {
 					var ctx context.Context
 					ctx, cancel = context.WithCancel(context.Background())
+
 					go hs.Start(ctx)
 					go ws.Start(ctx)
+					go ts.Start(ctx)
+
 					return nil
 				},
 				OnStop: func(_ context.Context) error {
