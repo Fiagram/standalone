@@ -1,8 +1,10 @@
 package logic_consumer
 
 import (
+	"encoding/json"
 	"fmt"
 
+	logic_chatbot "github.com/Fiagram/standalone/internal/logic/chatbot"
 	"github.com/IBM/sarama"
 	"go.uber.org/zap"
 )
@@ -18,26 +20,29 @@ var TorchLogicTopic = "torch"
 var _ sarama.ConsumerGroupHandler = (*torchLogic)(nil)
 
 type torchLogic struct {
-	logger *zap.Logger
+	torchSignalChan chan logic_chatbot.TorchSignal
+	logger          *zap.Logger
 }
 
 func NewTorchLogic(
+	torchSignalChan chan logic_chatbot.TorchSignal,
 	logger *zap.Logger,
 ) TorchLogic {
 	return &torchLogic{
-		logger: logger,
+		torchSignalChan: torchSignalChan,
+		logger:          logger,
 	}
 }
 
-func (l *torchLogic) Setup(sarama.ConsumerGroupSession) error {
+func (l torchLogic) Setup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (l *torchLogic) Cleanup(sarama.ConsumerGroupSession) error {
+func (l torchLogic) Cleanup(sarama.ConsumerGroupSession) error {
 	return nil
 }
 
-func (l *torchLogic) ConsumeClaim(
+func (l torchLogic) ConsumeClaim(
 	session sarama.ConsumerGroupSession,
 	claim sarama.ConsumerGroupClaim,
 ) error {
@@ -49,14 +54,13 @@ func (l *torchLogic) ConsumeClaim(
 				return nil
 			}
 
-			fmt.Printf(
-				"topic=%s partition=%d offset=%d key=%s value=%s",
-				msg.Topic,
-				msg.Partition,
-				msg.Offset,
-				string(msg.Key),
-				string(msg.Value),
-			)
+			var incomingTorchSignal logic_chatbot.TorchSignal
+			if err := json.Unmarshal(msg.Value, &incomingTorchSignal); err != nil {
+				l.logger.Error("failed to unmarshal torch signal", zap.Error(err))
+				continue
+			}
+
+			l.torchSignalChan <- incomingTorchSignal
 
 			// Mark message as processed so the offset can be committed.
 			session.MarkMessage(msg, "")

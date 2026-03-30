@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	"github.com/Fiagram/standalone/internal/configs"
 	"github.com/Fiagram/standalone/internal/logger"
@@ -52,21 +54,30 @@ func NewConsumer(
 func (c *consumer) Start(ctx context.Context) error {
 	logger := logger.LoggerWithContext(ctx, c.logger)
 
+	var wg sync.WaitGroup
 	for topic, handlerFunc := range c.handlersMap {
+		wg.Add(1)
 		go func(topic string, handlerFunc sarama.ConsumerGroupHandler) {
-			if err := c.consumerGroup.Consume(
-				ctx,
-				[]string{topic},
-				handlerFunc,
-			); err != nil {
-				logger.
-					With(zap.String("queue_name", topic)).
-					With(zap.Error(err)).
-					Error("failed to consume message from queue")
+			defer wg.Done()
+			for {
+				if err := c.consumerGroup.Consume(
+					ctx,
+					[]string{topic},
+					handlerFunc,
+				); err != nil {
+					logger.
+						With(zap.String("queue_name", topic)).
+						With(zap.Error(err)).
+						Error("failed to consume message from queue")
+					time.Sleep(time.Second)
+				}
+				if ctx.Err() != nil {
+					return
+				}
 			}
 		}(topic, handlerFunc)
 	}
 
-	<-ctx.Done()
-	return nil
+	wg.Wait()
+	return c.consumerGroup.Close()
 }

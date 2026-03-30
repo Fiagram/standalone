@@ -22,6 +22,7 @@ type ChatbotWebhookAccessor interface {
 	CreateWebhook(ctx context.Context, webhook ChatbotWebhook) (uint64, error)
 
 	GetWebhook(ctx context.Context, id uint64) (ChatbotWebhook, error)
+	GetWebhooksAll(ctx context.Context) ([]ChatbotWebhook, error)
 	GetWebhooksByAccountId(ctx context.Context, accountId uint64, limit, offset int) ([]ChatbotWebhook, error)
 
 	UpdateWebhook(ctx context.Context, webhook ChatbotWebhook) error
@@ -114,6 +115,40 @@ func (a chatbotWebhookAccessor) GetWebhook(
 	}
 
 	return out, nil
+}
+
+func (a chatbotWebhookAccessor) GetWebhooksAll(
+	ctx context.Context,
+) ([]ChatbotWebhook, error) {
+	logger := logger.LoggerWithContext(ctx, a.logger)
+	const query = `SELECT id, of_account_id, name, url, created_at, updated_at
+			FROM chatbot_webhooks ORDER BY id ASC`
+	rows, err := a.exec.QueryContext(ctx, query)
+	if err != nil {
+		logger.With(zap.Error(err)).Error("failed to get all webhooks")
+		return nil, err
+	}
+	defer rows.Close()
+
+	var webhooks []ChatbotWebhook
+	for rows.Next() {
+		var item ChatbotWebhook
+		err = rows.Scan(
+			&item.Id,
+			&item.OfAccountId,
+			&item.Name,
+			&item.Url,
+			&item.CreatedAt,
+			&item.UpdatedAt,
+		)
+		if err != nil {
+			logger.With(zap.Error(err)).Error("failed to scan webhook row")
+			return nil, err
+		}
+		webhooks = append(webhooks, item)
+	}
+
+	return webhooks, nil
 }
 
 func (a chatbotWebhookAccessor) GetWebhooksByAccountId(
