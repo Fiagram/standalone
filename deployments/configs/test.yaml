@@ -22,9 +22,19 @@ http:
       - Content-Length
     allowCredentials: true
     maxAge: 12h
+  cookie:
+    domain: localhost
+    path: "/"
+    sameSite: none
+    secure: true
+    httpOnly: true
+
+message_queue:
+  addresses:
+    - fiagram_kafka-0:9092
+  clientID: standalone
 
 auth:
-  domain: localhost
   hash:
     cost: 10
   token:
