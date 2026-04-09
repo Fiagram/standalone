@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: The Fiagram API
   description: The REST Full API specification for the Fiagram project
-  version: 1.0.0
+  version: 1.1.0
 servers:
   - url: http://api.fiagram.com/v1
     description: Production server
