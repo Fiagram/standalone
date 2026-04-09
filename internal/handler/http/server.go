@@ -23,9 +23,10 @@ type HttpServer interface {
 type httpServer struct {
 	httpConfig configs.Http
 
-	authLogic  auth_logic.AuthLogic
-	usersLogic auth_logic.ProfileLogic
-	tokenLogic token_logic.Token
+	authLogic     auth_logic.AuthLogic
+	usersLogic    auth_logic.ProfileLogic
+	strategyLogic auth_logic.StrategyLogic
+	tokenLogic    token_logic.Token
 
 	logger *zap.Logger
 }
@@ -34,15 +35,17 @@ func NewHttpServer(
 	httpConfig configs.Http,
 	authLogic auth_logic.AuthLogic,
 	usersLogic auth_logic.ProfileLogic,
+	strategyLogic auth_logic.StrategyLogic,
 	tokenLogic token_logic.Token,
 	logger *zap.Logger,
 ) HttpServer {
 	return &httpServer{
-		httpConfig: httpConfig,
-		authLogic:  authLogic,
-		usersLogic: usersLogic,
-		tokenLogic: tokenLogic,
-		logger:     logger,
+		httpConfig:    httpConfig,
+		authLogic:     authLogic,
+		usersLogic:    usersLogic,
+		strategyLogic: strategyLogic,
+		tokenLogic:    tokenLogic,
+		logger:        logger,
 	}
 }
 
@@ -85,6 +88,17 @@ func (s *httpServer) Start(ctx context.Context) error {
 	authorized.PUT("/profile/webhooks/:webhookId", s.wrapWebhookId(s.usersLogic.UpdateProfileWebhook))
 	authorized.DELETE("/profile/webhooks/:webhookId", s.wrapWebhookId(s.usersLogic.DeleteProfileWebhook))
 
+	authorized.GET("/strategy/alerts", func(c *gin.Context) {
+		var params oapi.GetStrategyAlertsParams
+		_ = runtime.BindQueryParameterWithOptions("form", true, false, "limit", c.Request.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+		_ = runtime.BindQueryParameterWithOptions("form", true, false, "offset", c.Request.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+		s.strategyLogic.GetStrategyAlerts(c, params)
+	})
+	authorized.POST("/strategy/alerts", s.strategyLogic.CreateStrategyAlert)
+	authorized.GET("/strategy/alerts/:alertId", s.wrapAlertId(s.strategyLogic.GetStrategyAlert))
+	authorized.PUT("/strategy/alerts/:alertId", s.wrapAlertId(s.strategyLogic.UpdateStrategyAlert))
+	authorized.DELETE("/strategy/alerts/:alertId", s.wrapAlertId(s.strategyLogic.DeleteStrategyAlert))
+
 	address := s.httpConfig.Address
 	port := s.httpConfig.Port
 	logger.With(zap.String("address", address)).
@@ -98,11 +112,24 @@ func (s *httpServer) Start(ctx context.Context) error {
 func (s *httpServer) wrapWebhookId(handler func(*gin.Context, oapi.WebhookId)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var webhookId oapi.WebhookId
-		err := runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+		err := runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"code": "BadRequest", "message": fmt.Sprintf("invalid webhookId: %s", err)})
 			return
 		}
 		handler(c, webhookId)
+	}
+}
+
+// wrapAlertId parses the alertId path parameter and delegates to the typed handler.
+func (s *httpServer) wrapAlertId(handler func(*gin.Context, oapi.AlertId)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var alertId oapi.AlertId
+		err := runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "BadRequest", "message": fmt.Sprintf("invalid alertId: %s", err)})
+			return
+		}
+		handler(c, alertId)
 	}
 }

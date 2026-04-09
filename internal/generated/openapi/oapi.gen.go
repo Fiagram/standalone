@@ -6,6 +6,7 @@ package oapi
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oapi-codegen/runtime"
@@ -15,6 +16,66 @@ const (
 	RefreshTokenCookieScopes = "RefreshTokenCookie.Scopes"
 	BearerAuthScopes         = "bearerAuth.Scopes"
 )
+
+// Defines values for Indicator.
+const (
+	BollingerBands Indicator = "bollinger_bands"
+	Close          Indicator = "close"
+	Ma10           Indicator = "ma10"
+	Ma100          Indicator = "ma100"
+	Ma200          Indicator = "ma200"
+	Ma50           Indicator = "ma50"
+	Rsi            Indicator = "rsi"
+)
+
+// Valid indicates whether the value is a known member of the Indicator enum.
+func (e Indicator) Valid() bool {
+	switch e {
+	case BollingerBands:
+		return true
+	case Close:
+		return true
+	case Ma10:
+		return true
+	case Ma100:
+		return true
+	case Ma200:
+		return true
+	case Ma50:
+		return true
+	case Rsi:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Operator.
+const (
+	Crossing     Operator = "crossing"
+	CrossingDown Operator = "crossing_down"
+	CrossingUp   Operator = "crossing_up"
+	GreaterThan  Operator = "greater_than"
+	LessThan     Operator = "less_than"
+)
+
+// Valid indicates whether the value is a known member of the Operator enum.
+func (e Operator) Valid() bool {
+	switch e {
+	case Crossing:
+		return true
+	case CrossingDown:
+		return true
+	case CrossingUp:
+		return true
+	case GreaterThan:
+		return true
+	case LessThan:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for Role.
 const (
@@ -31,6 +92,45 @@ func (e Role) Valid() bool {
 	case Member:
 		return true
 	case None:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Timeframe.
+const (
+	D1 Timeframe = "D1"
+	M1 Timeframe = "M1"
+	W1 Timeframe = "W1"
+)
+
+// Valid indicates whether the value is a known member of the Timeframe enum.
+func (e Timeframe) Valid() bool {
+	switch e {
+	case D1:
+		return true
+	case M1:
+		return true
+	case W1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Trigger.
+const (
+	Every Trigger = "every"
+	Once  Trigger = "once"
+)
+
+// Valid indicates whether the value is a known member of the Trigger enum.
+func (e Trigger) Valid() bool {
+	switch e {
+	case Every:
+		return true
+	case Once:
 		return true
 	default:
 		return false
@@ -61,6 +161,31 @@ type Account struct {
 	Username Username `json:"username"`
 }
 
+// Alert defines model for Alert.
+type Alert struct {
+	// CreatedAt When the alert was created
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+
+	// Exp Unix timestamp (seconds since epoch) when the alert expires.
+	Exp int64 `json:"exp"`
+
+	// Id Server-generated unique ID
+	Id        *uint64   `json:"id,omitempty"`
+	Indicator Indicator `json:"indicator"`
+
+	// Message Optional message for the alert
+	Message  *string  `json:"message,omitempty"`
+	Operator Operator `json:"operator"`
+
+	// Symbol The stock ticker symbol
+	Symbol    string    `json:"symbol"`
+	Timeframe Timeframe `json:"timeframe"`
+	Trigger   Trigger   `json:"trigger"`
+
+	// UpdatedAt When the alert was last updated
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+}
+
 // Email defines model for Email.
 type Email = string
 
@@ -73,6 +198,12 @@ type ErrorResponse struct {
 
 // Fullname defines model for Fullname.
 type Fullname = string
+
+// Indicator defines model for Indicator.
+type Indicator string
+
+// Operator defines model for Operator.
+type Operator string
 
 // Password 8-72 characters, including at least one uppercase,
 // one lowercase, one digit, and one special character; no whitespace.
@@ -130,6 +261,12 @@ type SignupResponse struct {
 	Account     Account             `json:"account"`
 }
 
+// Timeframe defines model for Timeframe.
+type Timeframe string
+
+// Trigger defines model for Trigger.
+type Trigger string
+
 // UpdatePasswordRequest defines model for UpdatePasswordRequest.
 type UpdatePasswordRequest struct {
 	// NewPassword 8-72 characters, including at least one uppercase,
@@ -158,10 +295,13 @@ type Username = string
 // Webhook defines model for Webhook.
 type Webhook struct {
 	// Id Server-generated unique ID
-	Id   *int64 `json:"id,omitempty"`
-	Name string `json:"name"`
-	Url  string `json:"url"`
+	Id   *uint64 `json:"id,omitempty"`
+	Name string  `json:"name"`
+	Url  string  `json:"url"`
 }
+
+// AlertId defines model for AlertId.
+type AlertId = uint64
 
 // Limit defines model for Limit.
 type Limit = int
@@ -170,7 +310,7 @@ type Limit = int
 type Offset = int
 
 // WebhookId defines model for WebhookId.
-type WebhookId = int64
+type WebhookId = uint64
 
 // BadRequest defines model for BadRequest.
 type BadRequest = ErrorResponse
@@ -199,6 +339,15 @@ type GetProfileWebhooksParams struct {
 	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
+// GetStrategyAlertsParams defines parameters for GetStrategyAlerts.
+type GetStrategyAlertsParams struct {
+	// Limit Max items to return
+	Limit *Limit `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// Offset Items to skip
+	Offset *Offset `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // SignInJSONRequestBody defines body for SignIn for application/json ContentType.
 type SignInJSONRequestBody = SigninRequest
 
@@ -216,6 +365,12 @@ type CreateProfileWebhookJSONRequestBody = Webhook
 
 // UpdateProfileWebhookJSONRequestBody defines body for UpdateProfileWebhook for application/json ContentType.
 type UpdateProfileWebhookJSONRequestBody = Webhook
+
+// CreateStrategyAlertJSONRequestBody defines body for CreateStrategyAlert for application/json ContentType.
+type CreateStrategyAlertJSONRequestBody = Alert
+
+// UpdateStrategyAlertJSONRequestBody defines body for UpdateStrategyAlert for application/json ContentType.
+type UpdateStrategyAlertJSONRequestBody = Alert
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -255,6 +410,21 @@ type ServerInterface interface {
 	// Update a webhook
 	// (PUT /profile/webhooks/{webhookId})
 	UpdateProfileWebhook(c *gin.Context, webhookId WebhookId)
+	// List the account's trading alerts
+	// (GET /strategy/alerts)
+	GetStrategyAlerts(c *gin.Context, params GetStrategyAlertsParams)
+	// Create a new trading alert
+	// (POST /strategy/alerts)
+	CreateStrategyAlert(c *gin.Context)
+	// Delete a trading alert
+	// (DELETE /strategy/alerts/{alertId})
+	DeleteStrategyAlert(c *gin.Context, alertId AlertId)
+	// Get a specific trading alert
+	// (GET /strategy/alerts/{alertId})
+	GetStrategyAlert(c *gin.Context, alertId AlertId)
+	// Update a trading alert
+	// (PUT /strategy/alerts/{alertId})
+	UpdateStrategyAlert(c *gin.Context, alertId AlertId)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -426,7 +596,7 @@ func (siw *ServerInterfaceWrapper) DeleteProfileWebhook(c *gin.Context) {
 	// ------------- Path parameter "webhookId" -------------
 	var webhookId WebhookId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter webhookId: %w", err), http.StatusBadRequest)
 		return
@@ -452,7 +622,7 @@ func (siw *ServerInterfaceWrapper) GetProfileWebhook(c *gin.Context) {
 	// ------------- Path parameter "webhookId" -------------
 	var webhookId WebhookId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter webhookId: %w", err), http.StatusBadRequest)
 		return
@@ -478,7 +648,7 @@ func (siw *ServerInterfaceWrapper) UpdateProfileWebhook(c *gin.Context) {
 	// ------------- Path parameter "webhookId" -------------
 	var webhookId WebhookId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", c.Param("webhookId"), &webhookId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter webhookId: %w", err), http.StatusBadRequest)
 		return
@@ -494,6 +664,135 @@ func (siw *ServerInterfaceWrapper) UpdateProfileWebhook(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateProfileWebhook(c, webhookId)
+}
+
+// GetStrategyAlerts operation middleware
+func (siw *ServerInterfaceWrapper) GetStrategyAlerts(c *gin.Context) {
+
+	var err error
+
+	c.Set(BearerAuthScopes, []string{})
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetStrategyAlertsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", c.Request.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter limit: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", c.Request.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter offset: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetStrategyAlerts(c, params)
+}
+
+// CreateStrategyAlert operation middleware
+func (siw *ServerInterfaceWrapper) CreateStrategyAlert(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.CreateStrategyAlert(c)
+}
+
+// DeleteStrategyAlert operation middleware
+func (siw *ServerInterfaceWrapper) DeleteStrategyAlert(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "alertId" -------------
+	var alertId AlertId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter alertId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.DeleteStrategyAlert(c, alertId)
+}
+
+// GetStrategyAlert operation middleware
+func (siw *ServerInterfaceWrapper) GetStrategyAlert(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "alertId" -------------
+	var alertId AlertId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter alertId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetStrategyAlert(c, alertId)
+}
+
+// UpdateStrategyAlert operation middleware
+func (siw *ServerInterfaceWrapper) UpdateStrategyAlert(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "alertId" -------------
+	var alertId AlertId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter alertId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.UpdateStrategyAlert(c, alertId)
 }
 
 // GinServerOptions provides options for the Gin server.
@@ -535,4 +834,9 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.DeleteProfileWebhook)
 	router.GET(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.GetProfileWebhook)
 	router.PUT(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.UpdateProfileWebhook)
+	router.GET(options.BaseURL+"/strategy/alerts", wrapper.GetStrategyAlerts)
+	router.POST(options.BaseURL+"/strategy/alerts", wrapper.CreateStrategyAlert)
+	router.DELETE(options.BaseURL+"/strategy/alerts/:alertId", wrapper.DeleteStrategyAlert)
+	router.GET(options.BaseURL+"/strategy/alerts/:alertId", wrapper.GetStrategyAlert)
+	router.PUT(options.BaseURL+"/strategy/alerts/:alertId", wrapper.UpdateStrategyAlert)
 }

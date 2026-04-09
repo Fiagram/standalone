@@ -15,6 +15,8 @@ tags:
     description: Authentication endpoints
   - name: Profile
     description: Profile endpoints
+  - name: Strategy
+    description: Trading strategy endpoints
 
 security:
   - bearerAuth: []
@@ -303,6 +305,113 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # -------------------------------- Strategy
+  /strategy/alerts:
+    get:
+      tags: [Strategy]
+      summary: List the account's trading alerts
+      operationId: getStrategyAlerts
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          description: List of trading alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Alert"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+    post:
+      tags: [Strategy]
+      summary: Create a new trading alert
+      operationId: createStrategyAlert
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Alert"
+      responses:
+        "201":
+          description: Alert created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /strategy/alerts/{alertId}:
+    get:
+      tags: [Strategy]
+      summary: Get a specific trading alert
+      operationId: getStrategyAlert
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AlertId"
+      responses:
+        "200":
+          description: Alert details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    put:
+      tags: [Strategy]
+      summary: Update a trading alert
+      operationId: updateStrategyAlert
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AlertId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Alert"
+      responses:
+        "200":
+          description: Alert updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Alert"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+    delete:
+      tags: [Strategy]
+      summary: Delete a trading alert
+      operationId: deleteStrategyAlert
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/AlertId"
+      responses:
+        "204":
+          description: Alert deleted
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -343,7 +452,17 @@ components:
       description: The unique ID of the webhook
       schema:
         type: integer
-        format: int64
+        format: uint64
+        minimum: 1
+
+    AlertId:
+      name: alertId
+      in: path
+      required: true
+      description: The unique ID of the trading alert
+      schema:
+        type: integer
+        format: uint64
         minimum: 1
 
   responses:
@@ -575,7 +694,7 @@ components:
       properties:
         id:
           type: integer
-          format: int64
+          format: uint64
           minLength: 1
           maxLength: 26
           pattern: "^(?=.{5,20}$)(?!.*[_.]{2})[a-zA-Z0-9]+([._]?[a-zA-Z0-9]+)*$"
@@ -586,3 +705,89 @@ components:
           type: string
         url:
           type: string
+
+    # -------------------------------- Strategy
+    Timeframe:
+      type: string
+      enum:
+        - D1
+        - W1
+        - M1
+      example: D1
+
+    Indicator:
+      type: string
+      enum:
+        - close
+        - bollinger_bands
+        - rsi
+        - ma10
+        - ma50
+        - ma100
+        - ma200
+      example: rsi
+
+    Operator:
+      type: string
+      enum:
+        - greater_than
+        - less_than
+        - crossing_up
+        - crossing_down
+        - crossing
+      example: greater_than
+
+    Trigger:
+      type: string
+      enum:
+        - once
+        - every
+      example: once
+
+    Alert:
+      type: object
+      additionalProperties: false
+      required: [timeframe, symbol, indicator, operator, trigger, exp]
+      properties:
+        id:
+          type: integer
+          format: uint64
+          readOnly: true
+          description: Server-generated unique ID
+          example: 1
+        timeframe:
+          $ref: "#/components/schemas/Timeframe"
+        symbol:
+          type: string
+          minLength: 1
+          maxLength: 20
+          description: The stock ticker symbol
+          example: AAPL
+        indicator:
+          $ref: "#/components/schemas/Indicator"
+        operator:
+          $ref: "#/components/schemas/Operator"
+        trigger:
+          $ref: "#/components/schemas/Trigger"
+        exp:
+          type: integer
+          format: int64
+          minimum: 1
+          description: >
+            Unix timestamp (seconds since epoch) when the alert expires.
+          example: 1706812800
+        message:
+          type: string
+          maxLength: 500
+          description: Optional message for the alert
+          example: RSI crossed above 70
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the alert was created
+        updatedAt:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the alert was last updated

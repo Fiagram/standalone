@@ -5,6 +5,7 @@ import (
 	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	dao_mq_consumer "github.com/Fiagram/standalone/internal/dao/message_queue/consumer"
 	dao_mq_producer "github.com/Fiagram/standalone/internal/dao/message_queue/producer"
+	dao_strategy "github.com/Fiagram/standalone/internal/dao/strategy"
 	"go.uber.org/fx"
 )
 
@@ -24,5 +25,7 @@ var Module = fx.Module(
 
 		dao_mq_consumer.NewDaoMessageQueueConsumer,
 		dao_mq_producer.NewDaoMessageQueueProducer,
+
+		dao_strategy.NewClient,
 	),
 )

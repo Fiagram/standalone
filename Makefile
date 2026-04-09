@@ -8,11 +8,19 @@ all: generate build-all
 init:
 	go install github.com/rubenv/sql-migrate/...@v1.8.1
 	go install github.com/go-delve/delve/cmd/dlv@latest
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+	sudo apt install protobuf-compiler
 
 .PHONY: generate
 generate:
 	@echo "--- Generating OpenAPI server and types ---"
 	@go tool oapi-codegen --config=oapi_codegen.yml docs/openapi.yml
+	@echo "--- Generating protobuf stubs ---"
+	@protoc -I=. \
+	--go_out=internal/generated \
+	--go-grpc_out=internal/generated \
+	api/*.proto
 
 .PHONY: build-linux-amd64
 build-linux-amd64:

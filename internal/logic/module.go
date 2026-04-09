@@ -19,6 +19,7 @@ var Module = fx.Module(
 
 		http_logic.NewAuthLogic,
 		http_logic.NewProfileLogic,
+		http_logic.NewStrategyLogic,
 
 		logic_chatbot.NewCreatedWebhookChan,
 		logic_chatbot.NewTorchSignalChan,

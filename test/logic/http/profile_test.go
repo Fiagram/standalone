@@ -11,8 +11,8 @@ import (
 
 	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
-	webhook_handler "github.com/Fiagram/standalone/internal/handler/chatbot"
 	logic_account "github.com/Fiagram/standalone/internal/logic/account"
+	logic_chatbot "github.com/Fiagram/standalone/internal/logic/chatbot"
 	logic_http "github.com/Fiagram/standalone/internal/logic/http"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -115,6 +115,10 @@ func (m *mockWebhookAccessor) DeleteWebhook(ctx context.Context, id uint64) erro
 	}
 	return nil
 }
+func (m *mockWebhookAccessor) GetWebhooksAll(_ context.Context) ([]dao_database.ChatbotWebhook, error) {
+	return nil, nil
+}
+
 func (m *mockWebhookAccessor) WithExecutor(_ dao_database.Executor) dao_database.ChatbotWebhookAccessor {
 	return m
 }
@@ -165,7 +169,7 @@ func newTestProfileLogic(
 	accountRoleAccessor dao_database.AccountRoleAccessor,
 ) logic_http.ProfileLogic {
 	logger := zap.NewNop()
-	signalCh := webhook_handler.NewCreatedWebhookChan()
+	signalCh := logic_chatbot.NewCreatedWebhookChan()
 
 	if accountRoleAccessor == nil {
 		accountRoleAccessor = &mockAccountRoleAccessor{}
@@ -411,7 +415,7 @@ func TestCreateProfileWebhook_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Id)
-	require.Equal(t, int64(99), *resp.Id)
+	require.Equal(t, uint64(99), *resp.Id)
 	require.Equal(t, "my-hook", resp.Name)
 	require.Equal(t, "https://example.com/hook", resp.Url)
 }
@@ -482,7 +486,7 @@ func TestGetProfileWebhook_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Id)
-	require.Equal(t, int64(55), *resp.Id)
+	require.Equal(t, uint64(55), *resp.Id)
 	require.Equal(t, "wh", resp.Name)
 }
 
@@ -558,7 +562,7 @@ func TestUpdateProfileWebhook_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Id)
-	require.Equal(t, int64(20), *resp.Id)
+	require.Equal(t, uint64(20), *resp.Id)
 	require.Equal(t, "new-name", resp.Name)
 	require.Equal(t, "https://new.com", resp.Url)
 }

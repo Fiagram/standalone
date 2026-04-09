@@ -16,5 +16,7 @@ var Module = fx.Module(
 		GetConfigAuthHash,
 		GetConfigAuthToken,
 		GetConfigMessageQueue,
+		GetConfigGrpcClient,
+		GetConfigGrpcClientStrategy,
 	),
 )

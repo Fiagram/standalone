@@ -17,6 +17,7 @@ type Config struct {
 	Log            Log            `yaml:"log"`
 	CacheClient    CacheClient    `yaml:"cache_client"`
 	DatabaseClient DatabaseClient `yaml:"database_client"`
+	GrpcClient     GrpcClient     `yaml:"grpc_client"`
 }
 
 // Creates a new config instance by reading from a given YAML file.

@@ -305,7 +305,7 @@ func (u *profileLogic) GetProfileWebhooks(c *gin.Context, params oapi.GetProfile
 	out := make([]oapi.Webhook, 0, len(webhooks))
 	for _, w := range webhooks {
 		out = append(out, oapi.Webhook{
-			Id:   utils.Ptr(int64(w.Id)),
+			Id:   utils.Ptr(w.Id),
 			Name: w.Name,
 			Url:  w.Url,
 		})
@@ -352,7 +352,7 @@ func (u *profileLogic) CreateProfileWebhook(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, oapi.Webhook{
-		Id:   utils.Ptr(int64(id)),
+		Id:   utils.Ptr(id),
 		Name: req.Name,
 		Url:  req.Url,
 	})
@@ -386,7 +386,7 @@ func (u *profileLogic) GetProfileWebhook(c *gin.Context, webhookId oapi.WebhookI
 	}
 
 	c.JSON(http.StatusOK, oapi.Webhook{
-		Id:   utils.Ptr(int64(webhook.Id)),
+		Id:   utils.Ptr(webhook.Id),
 		Name: webhook.Name,
 		Url:  webhook.Url,
 	})

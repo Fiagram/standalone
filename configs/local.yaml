@@ -48,7 +48,7 @@ log:
 
 database_client:
   type: mysql
-  address: "127.0.0.1"
+  address: 127.0.0.1
   port: 3306
   username: root
   password: root
@@ -56,7 +56,12 @@ database_client:
 
 cache_client:
   type: redis
-  address: "127.0.0.1"
+  address: 127.0.0.1
   port: 6379
   username:
   password:
+
+grpc_client:
+  strategy:
+    address: 127.0.0.1
+    port: 13000
