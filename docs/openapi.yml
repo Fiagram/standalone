@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: The Fiagram API
   description: The REST Full API specification for the Fiagram project
-  version: 1.1.0
+  version: 1.2.0
 servers:
   - url: http://api.fiagram.com/v1
     description: Production server
@@ -25,7 +25,7 @@ paths:
   # -------------------------------- Auth
   /auth/signup:
     post:
-      tags: [Auth]
+      tags: [ Auth ]
       summary: Sign up a new account
       operationId: signUp
       description: |
@@ -58,7 +58,7 @@ paths:
 
   /auth/signin:
     post:
-      tags: [Auth]
+      tags: [ Auth ]
       summary: Sign in
       description: |
         Validates credentials, sets refresh token to cookie, returns access token in body.
@@ -92,7 +92,7 @@ paths:
 
   /auth/token/refresh:
     post:
-      tags: [Auth]
+      tags: [ Auth ]
       summary: Refresh access token using refresh token
       description: |
         Use a refresh token to obtain a new access token. Server MAY rotate refresh tokens.
@@ -120,7 +120,7 @@ paths:
 
   /auth/token/signout:
     post:
-      tags: [Auth]
+      tags: [ Auth ]
       summary: Sign out and revoke refresh token
       description: >
         Revokes the `refresh_token`. If `refresh_token` is stored in cookie,
@@ -138,7 +138,7 @@ paths:
   # -------------------------------- Profile
   /profile/me:
     get:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Get current account information
       operationId: getProfileMe
       security:
@@ -155,7 +155,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
     put:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Update current account information
       operationId: updateProfileMe
       security:
@@ -180,7 +180,7 @@ paths:
 
   /profile/me/password:
     put:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Update current account password
       operationId: updateProfilePassword
       security:
@@ -201,7 +201,7 @@ paths:
 
   /profile/webhooks:
     get:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: List the account's webhooks
       operationId: getProfileWebhooks
       security:
@@ -222,7 +222,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
     post:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Create a new webhook
       operationId: createProfileWebhook
       security:
@@ -246,7 +246,7 @@ paths:
 
   /profile/webhooks/{webhookId}:
     get:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Get a specific webhook
       operationId: getProfileWebhook
       security:
@@ -265,7 +265,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
     put:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Update a webhook
       operationId: updateProfileWebhook
       security:
@@ -291,7 +291,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
     delete:
-      tags: [Profile]
+      tags: [ Profile ]
       summary: Delete a webhook
       operationId: deleteProfileWebhook
       security:
@@ -308,7 +308,7 @@ paths:
   # -------------------------------- Strategy
   /strategy/alerts:
     get:
-      tags: [Strategy]
+      tags: [ Strategy ]
       summary: List the account's trading alerts
       operationId: getStrategyAlerts
       security:
@@ -329,7 +329,7 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
 
     post:
-      tags: [Strategy]
+      tags: [ Strategy ]
       summary: Create a new trading alert
       operationId: createStrategyAlert
       security:
@@ -353,7 +353,7 @@ paths:
 
   /strategy/alerts/{alertId}:
     get:
-      tags: [Strategy]
+      tags: [ Strategy ]
       summary: Get a specific trading alert
       operationId: getStrategyAlert
       security:
@@ -372,7 +372,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
     put:
-      tags: [Strategy]
+      tags: [ Strategy ]
       summary: Update a trading alert
       operationId: updateStrategyAlert
       security:
@@ -398,7 +398,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
     delete:
-      tags: [Strategy]
+      tags: [ Strategy ]
       summary: Delete a trading alert
       operationId: deleteStrategyAlert
       security:
@@ -513,7 +513,7 @@ components:
     ErrorResponse:
       type: object
       additionalProperties: false
-      required: [code, message]
+      required: [ code, message ]
       properties:
         code:
           type: string
@@ -534,7 +534,7 @@ components:
       description: |
         8-72 characters, including at least one uppercase,
         one lowercase, one digit, and one special character; no whitespace.
-      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{8,72}$'
+      pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z0-9])\\S{8,72}$"
       example: Str0ngPassw0rd!
 
     Username:
@@ -556,13 +556,13 @@ components:
 
     Email:
       type: string
-      pattern: '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+      pattern: "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
       example: user1@example.com
 
     PhoneNumber:
       type: string
       description: the phone number of a created account
-      pattern: '^\d{6,15}$'
+      pattern: "^\\d{6,15}$"
       example: "0123456789"
 
     Role:
@@ -576,7 +576,7 @@ components:
 
     Account:
       type: object
-      required: [username, email, role, fullname]
+      required: [ username, email, role, fullname ]
       properties:
         username:
           $ref: "#/components/schemas/Username"
@@ -591,7 +591,7 @@ components:
 
     SignupRequest:
       type: object
-      required: [account, password]
+      required: [ account, password ]
       properties:
         account:
           $ref: "#/components/schemas/Account"
@@ -601,7 +601,7 @@ components:
     AccessTokenResponse:
       type: object
       additionalProperties: false
-      required: [token, exp]
+      required: [ token, exp ]
       properties:
         token:
           type: string
@@ -618,7 +618,7 @@ components:
     SignupResponse:
       type: object
       additionalProperties: false
-      required: [account, accessToken]
+      required: [ account, accessToken ]
       properties:
         account:
           $ref: "#/components/schemas/Account"
@@ -628,7 +628,7 @@ components:
     SigninRequest:
       type: object
       additionalProperties: false
-      required: [username, password]
+      required: [ username, password ]
       properties:
         username:
           $ref: "#/components/schemas/Username"
@@ -642,7 +642,7 @@ components:
     SigninResponse:
       type: object
       additionalProperties: false
-      required: [account, accessToken]
+      required: [ account, accessToken ]
       properties:
         account:
           $ref: "#/components/schemas/Account"
@@ -652,7 +652,7 @@ components:
     RefreshResponse:
       type: object
       additionalProperties: false
-      required: [accessToken]
+      required: [ accessToken ]
       properties:
         accessToken:
           $ref: "#/components/schemas/AccessTokenResponse"
@@ -661,7 +661,7 @@ components:
     ProfileMeResponse:
       type: object
       additionalProperties: false
-      required: [account]
+      required: [ account ]
       properties:
         account:
           $ref: "#/components/schemas/Account"
@@ -680,7 +680,7 @@ components:
     UpdatePasswordRequest:
       type: object
       additionalProperties: false
-      required: [oldPassword, newPassword]
+      required: [ oldPassword, newPassword ]
       properties:
         oldPassword:
           $ref: "#/components/schemas/Password"
@@ -690,7 +690,7 @@ components:
     Webhook:
       type: object
       additionalProperties: false
-      required: [name, url]
+      required: [ name, url ]
       properties:
         id:
           type: integer
@@ -715,17 +715,61 @@ components:
         - M1
       example: D1
 
-    Indicator:
+    BollingerBand:
       type: string
       enum:
-        - close
-        - bollinger_bands
-        - rsi
-        - ma10
-        - ma50
+        - middle
+        - lower
+        - upper
+      example: lower
+
+    SimpleMovingAverage:
+      type: string
+      enum:
+        - sma10
+        - sma50
         - ma100
         - ma200
+      example: sma50
+
+    RelativeStrengthIndex:
+      type: string
+      enum:
+        - rsi
       example: rsi
+
+    Price:
+      type: string
+      enum:
+        - open
+        - high
+        - low
+        - close
+      example: close
+
+    Volume:
+      type: string
+      enum:
+        - volume
+      example: volume
+
+    OperandBasedOnPrice:
+      oneOf:
+        - $ref: "#/components/schemas/Price"
+        - $ref: "#/components/schemas/BollingerBand"
+        - $ref: "#/components/schemas/SimpleMovingAverage"
+      example: close
+
+    OperandBasedOnNiche:
+      oneOf:
+        - $ref: "#/components/schemas/Volume"
+        - $ref: "#/components/schemas/RelativeStrengthIndex"
+      example: rsi
+
+    OperandAsConstValue:
+      type: number
+      description: A constant value to compare against
+      example: 150.0
 
     Operator:
       type: string
@@ -747,7 +791,7 @@ components:
     Alert:
       type: object
       additionalProperties: false
-      required: [timeframe, symbol, indicator, operator, trigger, exp]
+      required: [ timeframe, symbol, operand1, operand2, operator, trigger, exp ]
       properties:
         id:
           type: integer
@@ -760,11 +804,24 @@ components:
         symbol:
           type: string
           minLength: 1
-          maxLength: 20
+          maxLength: 3
           description: The stock ticker symbol
-          example: AAPL
-        indicator:
-          $ref: "#/components/schemas/Indicator"
+          example: GMD
+        operand1:
+          description: |
+            The left-hand side operand of the condition. Can be a price-based or niche-based indicator.
+          oneOf:
+            - $ref: "#/components/schemas/OperandBasedOnPrice"
+            - $ref: "#/components/schemas/OperandBasedOnNiche"
+        operand2:
+          description: |
+            The right-hand side operand of the condition.
+            If operand1 is price-based, operand2 can be either a constant value or price-based indicator.
+            Otherwise if operand1 is niche-based, operand2 can be either a constant value or niche-based indicator.
+          oneOf:
+            - $ref: "#/components/schemas/OperandAsConstValue"
+            - $ref: "#/components/schemas/OperandBasedOnPrice"
+            - $ref: "#/components/schemas/OperandBasedOnNiche"
         operator:
           $ref: "#/components/schemas/Operator"
         trigger:
@@ -780,14 +837,13 @@ components:
           type: string
           maxLength: 500
           description: Optional message for the alert
-          example: RSI crossed above 70
         createdAt:
           type: string
           format: date-time
           readOnly: true
-          description: When the alert was created
+          description: When the alert was created, server side generated
         updatedAt:
           type: string
           format: date-time
           readOnly: true
-          description: When the alert was last updated
+          description: When the alert was last updated, server side generated

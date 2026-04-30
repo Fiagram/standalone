@@ -4,6 +4,7 @@
 package oapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -17,33 +18,21 @@ const (
 	BearerAuthScopes         = "bearerAuth.Scopes"
 )
 
-// Defines values for Indicator.
+// Defines values for BollingerBand.
 const (
-	BollingerBands Indicator = "bollinger_bands"
-	Close          Indicator = "close"
-	Ma10           Indicator = "ma10"
-	Ma100          Indicator = "ma100"
-	Ma200          Indicator = "ma200"
-	Ma50           Indicator = "ma50"
-	Rsi            Indicator = "rsi"
+	Lower  BollingerBand = "lower"
+	Middle BollingerBand = "middle"
+	Upper  BollingerBand = "upper"
 )
 
-// Valid indicates whether the value is a known member of the Indicator enum.
-func (e Indicator) Valid() bool {
+// Valid indicates whether the value is a known member of the BollingerBand enum.
+func (e BollingerBand) Valid() bool {
 	switch e {
-	case BollingerBands:
+	case Lower:
 		return true
-	case Close:
+	case Middle:
 		return true
-	case Ma10:
-		return true
-	case Ma100:
-		return true
-	case Ma200:
-		return true
-	case Ma50:
-		return true
-	case Rsi:
+	case Upper:
 		return true
 	default:
 		return false
@@ -77,6 +66,45 @@ func (e Operator) Valid() bool {
 	}
 }
 
+// Defines values for Price.
+const (
+	Close Price = "close"
+	High  Price = "high"
+	Low   Price = "low"
+	Open  Price = "open"
+)
+
+// Valid indicates whether the value is a known member of the Price enum.
+func (e Price) Valid() bool {
+	switch e {
+	case Close:
+		return true
+	case High:
+		return true
+	case Low:
+		return true
+	case Open:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RelativeStrengthIndex.
+const (
+	Rsi RelativeStrengthIndex = "rsi"
+)
+
+// Valid indicates whether the value is a known member of the RelativeStrengthIndex enum.
+func (e RelativeStrengthIndex) Valid() bool {
+	switch e {
+	case Rsi:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Role.
 const (
 	Admin  Role = "admin"
@@ -92,6 +120,30 @@ func (e Role) Valid() bool {
 	case Member:
 		return true
 	case None:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SimpleMovingAverage.
+const (
+	Ma100 SimpleMovingAverage = "ma100"
+	Ma200 SimpleMovingAverage = "ma200"
+	Sma10 SimpleMovingAverage = "sma10"
+	Sma50 SimpleMovingAverage = "sma50"
+)
+
+// Valid indicates whether the value is a known member of the SimpleMovingAverage enum.
+func (e SimpleMovingAverage) Valid() bool {
+	switch e {
+	case Ma100:
+		return true
+	case Ma200:
+		return true
+	case Sma10:
+		return true
+	case Sma50:
 		return true
 	default:
 		return false
@@ -137,6 +189,21 @@ func (e Trigger) Valid() bool {
 	}
 }
 
+// Defines values for Volume.
+const (
+	VolumeVolume Volume = "volume"
+)
+
+// Valid indicates whether the value is a known member of the Volume enum.
+func (e Volume) Valid() bool {
+	switch e {
+	case VolumeVolume:
+		return true
+	default:
+		return false
+	}
+}
+
 // AccessTokenResponse defines model for AccessTokenResponse.
 type AccessTokenResponse struct {
 	// Exp Unix timestamp (seconds since epoch) when the access token expires.
@@ -163,28 +230,50 @@ type Account struct {
 
 // Alert defines model for Alert.
 type Alert struct {
-	// CreatedAt When the alert was created
+	// CreatedAt When the alert was created, server side generated
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 
 	// Exp Unix timestamp (seconds since epoch) when the alert expires.
 	Exp int64 `json:"exp"`
 
 	// Id Server-generated unique ID
-	Id        *uint64   `json:"id,omitempty"`
-	Indicator Indicator `json:"indicator"`
+	Id *uint64 `json:"id,omitempty"`
 
 	// Message Optional message for the alert
-	Message  *string  `json:"message,omitempty"`
-	Operator Operator `json:"operator"`
+	Message *string `json:"message,omitempty"`
+
+	// Operand1 The left-hand side operand of the condition. Can be a price-based or niche-based indicator.
+	Operand1 Alert_Operand1 `json:"operand1"`
+
+	// Operand2 The right-hand side operand of the condition.
+	// If operand1 is price-based, operand2 can be either a constant value or price-based indicator.
+	// Otherwise if operand1 is niche-based, operand2 can be either a constant value or niche-based indicator.
+	Operand2 Alert_Operand2 `json:"operand2"`
+	Operator Operator       `json:"operator"`
 
 	// Symbol The stock ticker symbol
 	Symbol    string    `json:"symbol"`
 	Timeframe Timeframe `json:"timeframe"`
 	Trigger   Trigger   `json:"trigger"`
 
-	// UpdatedAt When the alert was last updated
+	// UpdatedAt When the alert was last updated, server side generated
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
+
+// Alert_Operand1 The left-hand side operand of the condition. Can be a price-based or niche-based indicator.
+type Alert_Operand1 struct {
+	union json.RawMessage
+}
+
+// Alert_Operand2 The right-hand side operand of the condition.
+// If operand1 is price-based, operand2 can be either a constant value or price-based indicator.
+// Otherwise if operand1 is niche-based, operand2 can be either a constant value or niche-based indicator.
+type Alert_Operand2 struct {
+	union json.RawMessage
+}
+
+// BollingerBand defines model for BollingerBand.
+type BollingerBand string
 
 // Email defines model for Email.
 type Email = string
@@ -199,8 +288,18 @@ type ErrorResponse struct {
 // Fullname defines model for Fullname.
 type Fullname = string
 
-// Indicator defines model for Indicator.
-type Indicator string
+// OperandAsConstValue A constant value to compare against
+type OperandAsConstValue = float32
+
+// OperandBasedOnNiche defines model for OperandBasedOnNiche.
+type OperandBasedOnNiche struct {
+	union json.RawMessage
+}
+
+// OperandBasedOnPrice defines model for OperandBasedOnPrice.
+type OperandBasedOnPrice struct {
+	union json.RawMessage
+}
 
 // Operator defines model for Operator.
 type Operator string
@@ -212,6 +311,9 @@ type Password = string
 // PhoneNumber the phone number of a created account
 type PhoneNumber = string
 
+// Price defines model for Price.
+type Price string
+
 // ProfileMeResponse defines model for ProfileMeResponse.
 type ProfileMeResponse struct {
 	Account Account `json:"account"`
@@ -221,6 +323,9 @@ type ProfileMeResponse struct {
 type RefreshResponse struct {
 	AccessToken AccessTokenResponse `json:"accessToken"`
 }
+
+// RelativeStrengthIndex defines model for RelativeStrengthIndex.
+type RelativeStrengthIndex string
 
 // Role defines model for Role.
 type Role string
@@ -261,6 +366,9 @@ type SignupResponse struct {
 	Account     Account             `json:"account"`
 }
 
+// SimpleMovingAverage defines model for SimpleMovingAverage.
+type SimpleMovingAverage string
+
 // Timeframe defines model for Timeframe.
 type Timeframe string
 
@@ -291,6 +399,9 @@ type UpdateProfileMeRequest struct {
 // optional single dots or underscores allowed between characters;
 // cannot start or end with dot/underscore; no consecutive dots or underscores.
 type Username = string
+
+// Volume defines model for Volume.
+type Volume string
 
 // Webhook defines model for Webhook.
 type Webhook struct {
@@ -371,6 +482,306 @@ type CreateStrategyAlertJSONRequestBody = Alert
 
 // UpdateStrategyAlertJSONRequestBody defines body for UpdateStrategyAlert for application/json ContentType.
 type UpdateStrategyAlertJSONRequestBody = Alert
+
+// AsOperandBasedOnPrice returns the union data inside the Alert_Operand1 as a OperandBasedOnPrice
+func (t Alert_Operand1) AsOperandBasedOnPrice() (OperandBasedOnPrice, error) {
+	var body OperandBasedOnPrice
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperandBasedOnPrice overwrites any union data inside the Alert_Operand1 as the provided OperandBasedOnPrice
+func (t *Alert_Operand1) FromOperandBasedOnPrice(v OperandBasedOnPrice) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperandBasedOnPrice performs a merge with any union data inside the Alert_Operand1, using the provided OperandBasedOnPrice
+func (t *Alert_Operand1) MergeOperandBasedOnPrice(v OperandBasedOnPrice) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOperandBasedOnNiche returns the union data inside the Alert_Operand1 as a OperandBasedOnNiche
+func (t Alert_Operand1) AsOperandBasedOnNiche() (OperandBasedOnNiche, error) {
+	var body OperandBasedOnNiche
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperandBasedOnNiche overwrites any union data inside the Alert_Operand1 as the provided OperandBasedOnNiche
+func (t *Alert_Operand1) FromOperandBasedOnNiche(v OperandBasedOnNiche) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperandBasedOnNiche performs a merge with any union data inside the Alert_Operand1, using the provided OperandBasedOnNiche
+func (t *Alert_Operand1) MergeOperandBasedOnNiche(v OperandBasedOnNiche) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Alert_Operand1) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Alert_Operand1) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsOperandAsConstValue returns the union data inside the Alert_Operand2 as a OperandAsConstValue
+func (t Alert_Operand2) AsOperandAsConstValue() (OperandAsConstValue, error) {
+	var body OperandAsConstValue
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperandAsConstValue overwrites any union data inside the Alert_Operand2 as the provided OperandAsConstValue
+func (t *Alert_Operand2) FromOperandAsConstValue(v OperandAsConstValue) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperandAsConstValue performs a merge with any union data inside the Alert_Operand2, using the provided OperandAsConstValue
+func (t *Alert_Operand2) MergeOperandAsConstValue(v OperandAsConstValue) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOperandBasedOnPrice returns the union data inside the Alert_Operand2 as a OperandBasedOnPrice
+func (t Alert_Operand2) AsOperandBasedOnPrice() (OperandBasedOnPrice, error) {
+	var body OperandBasedOnPrice
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperandBasedOnPrice overwrites any union data inside the Alert_Operand2 as the provided OperandBasedOnPrice
+func (t *Alert_Operand2) FromOperandBasedOnPrice(v OperandBasedOnPrice) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperandBasedOnPrice performs a merge with any union data inside the Alert_Operand2, using the provided OperandBasedOnPrice
+func (t *Alert_Operand2) MergeOperandBasedOnPrice(v OperandBasedOnPrice) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOperandBasedOnNiche returns the union data inside the Alert_Operand2 as a OperandBasedOnNiche
+func (t Alert_Operand2) AsOperandBasedOnNiche() (OperandBasedOnNiche, error) {
+	var body OperandBasedOnNiche
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOperandBasedOnNiche overwrites any union data inside the Alert_Operand2 as the provided OperandBasedOnNiche
+func (t *Alert_Operand2) FromOperandBasedOnNiche(v OperandBasedOnNiche) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOperandBasedOnNiche performs a merge with any union data inside the Alert_Operand2, using the provided OperandBasedOnNiche
+func (t *Alert_Operand2) MergeOperandBasedOnNiche(v OperandBasedOnNiche) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Alert_Operand2) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Alert_Operand2) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsVolume returns the union data inside the OperandBasedOnNiche as a Volume
+func (t OperandBasedOnNiche) AsVolume() (Volume, error) {
+	var body Volume
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVolume overwrites any union data inside the OperandBasedOnNiche as the provided Volume
+func (t *OperandBasedOnNiche) FromVolume(v Volume) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVolume performs a merge with any union data inside the OperandBasedOnNiche, using the provided Volume
+func (t *OperandBasedOnNiche) MergeVolume(v Volume) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRelativeStrengthIndex returns the union data inside the OperandBasedOnNiche as a RelativeStrengthIndex
+func (t OperandBasedOnNiche) AsRelativeStrengthIndex() (RelativeStrengthIndex, error) {
+	var body RelativeStrengthIndex
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRelativeStrengthIndex overwrites any union data inside the OperandBasedOnNiche as the provided RelativeStrengthIndex
+func (t *OperandBasedOnNiche) FromRelativeStrengthIndex(v RelativeStrengthIndex) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRelativeStrengthIndex performs a merge with any union data inside the OperandBasedOnNiche, using the provided RelativeStrengthIndex
+func (t *OperandBasedOnNiche) MergeRelativeStrengthIndex(v RelativeStrengthIndex) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OperandBasedOnNiche) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OperandBasedOnNiche) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsPrice returns the union data inside the OperandBasedOnPrice as a Price
+func (t OperandBasedOnPrice) AsPrice() (Price, error) {
+	var body Price
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPrice overwrites any union data inside the OperandBasedOnPrice as the provided Price
+func (t *OperandBasedOnPrice) FromPrice(v Price) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePrice performs a merge with any union data inside the OperandBasedOnPrice, using the provided Price
+func (t *OperandBasedOnPrice) MergePrice(v Price) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsBollingerBand returns the union data inside the OperandBasedOnPrice as a BollingerBand
+func (t OperandBasedOnPrice) AsBollingerBand() (BollingerBand, error) {
+	var body BollingerBand
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBollingerBand overwrites any union data inside the OperandBasedOnPrice as the provided BollingerBand
+func (t *OperandBasedOnPrice) FromBollingerBand(v BollingerBand) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeBollingerBand performs a merge with any union data inside the OperandBasedOnPrice, using the provided BollingerBand
+func (t *OperandBasedOnPrice) MergeBollingerBand(v BollingerBand) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsSimpleMovingAverage returns the union data inside the OperandBasedOnPrice as a SimpleMovingAverage
+func (t OperandBasedOnPrice) AsSimpleMovingAverage() (SimpleMovingAverage, error) {
+	var body SimpleMovingAverage
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromSimpleMovingAverage overwrites any union data inside the OperandBasedOnPrice as the provided SimpleMovingAverage
+func (t *OperandBasedOnPrice) FromSimpleMovingAverage(v SimpleMovingAverage) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeSimpleMovingAverage performs a merge with any union data inside the OperandBasedOnPrice, using the provided SimpleMovingAverage
+func (t *OperandBasedOnPrice) MergeSimpleMovingAverage(v SimpleMovingAverage) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OperandBasedOnPrice) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OperandBasedOnPrice) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
