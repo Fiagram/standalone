@@ -121,13 +121,12 @@ func (s *httpServer) wrapWebhookId(handler func(*gin.Context, oapi.WebhookId)) g
 	}
 }
 
-// wrapAlertId parses the alertId path parameter and delegates to the typed handler.
+// wrapAlertId extracts the alertId path parameter and delegates to the typed handler.
 func (s *httpServer) wrapAlertId(handler func(*gin.Context, oapi.AlertId)) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var alertId oapi.AlertId
-		err := runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"code": "BadRequest", "message": fmt.Sprintf("invalid alertId: %s", err)})
+		alertId := c.Param("alertId")
+		if alertId == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "BadRequest", "message": "missing alertId"})
 			return
 		}
 		handler(c, alertId)

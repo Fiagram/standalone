@@ -81,7 +81,7 @@ func newTestStrategyLogic(client *mockStrategyClient) logic_http.StrategyLogic {
 func sampleProtoAlert() *pb.Alert {
 	msg := "test alert message"
 	return &pb.Alert{
-		Id:        1,
+		Id:        "1",
 		Timeframe: pb.Timeframe_TIMEFRAME_D1,
 		Symbol:    "AAPL",
 		Operand1:  &pb.Operand{Value: &pb.Operand_Price{Price: pb.Price_PRICE_CLOSE}},
@@ -233,7 +233,7 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 			msg := "buy signal"
 			return &pb.CreateAlertResponse{
 				Alert: &pb.Alert{
-					Id:        100,
+					Id:        "100",
 					Timeframe: in.Timeframe,
 					Symbol:    in.Symbol,
 					Operand1:  in.Operand1,
@@ -274,7 +274,7 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Id)
-	require.Equal(t, uint64(100), *resp.Id)
+	require.Equal(t, "100", *resp.Id)
 	require.Equal(t, oapi.W1, resp.Timeframe)
 	require.Equal(t, "TSLA", resp.Symbol)
 	require.Equal(t, oapi.LessThan, resp.Operator)
@@ -373,7 +373,7 @@ func TestGetStrategyAlert_Success(t *testing.T) {
 	mock := &mockStrategyClient{
 		getAlertFn: func(_ context.Context, in *pb.GetAlertRequest, _ ...grpc.CallOption) (*pb.GetAlertResponse, error) {
 			require.Equal(t, uint64(5), in.OfAccountId)
-			require.Equal(t, uint64(99), in.AlertId)
+			require.Equal(t, "99", in.AlertId)
 			return &pb.GetAlertResponse{
 				Alert: sampleProtoAlert(),
 			}, nil
@@ -383,7 +383,7 @@ func TestGetStrategyAlert_Success(t *testing.T) {
 
 	c, w := newGinContext(http.MethodGet, "/strategy/alerts/99", nil)
 	setAccountId(c, 5)
-	sl.GetStrategyAlert(c, 99)
+	sl.GetStrategyAlert(c, "99")
 
 	require.Equal(t, http.StatusOK, w.Code)
 
@@ -391,7 +391,7 @@ func TestGetStrategyAlert_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Id)
-	require.Equal(t, uint64(1), *resp.Id)
+	require.Equal(t, "1", *resp.Id)
 	require.Equal(t, "AAPL", resp.Symbol)
 }
 
@@ -399,7 +399,7 @@ func TestGetStrategyAlert_NoAccountId(t *testing.T) {
 	sl := newTestStrategyLogic(&mockStrategyClient{})
 
 	c, w := newGinContext(http.MethodGet, "/strategy/alerts/1", nil)
-	sl.GetStrategyAlert(c, 1)
+	sl.GetStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
@@ -414,7 +414,7 @@ func TestGetStrategyAlert_NotFound(t *testing.T) {
 
 	c, w := newGinContext(http.MethodGet, "/strategy/alerts/999", nil)
 	setAccountId(c, 1)
-	sl.GetStrategyAlert(c, 999)
+	sl.GetStrategyAlert(c, "999")
 
 	require.Equal(t, http.StatusNotFound, w.Code)
 }
@@ -427,7 +427,7 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 	mock := &mockStrategyClient{
 		updateAlertFn: func(_ context.Context, in *pb.UpdateAlertRequest, _ ...grpc.CallOption) (*pb.UpdateAlertResponse, error) {
 			require.Equal(t, uint64(3), in.OfAccountId)
-			require.Equal(t, uint64(50), in.AlertId)
+			require.Equal(t, "50", in.AlertId)
 			require.Equal(t, pb.Timeframe_TIMEFRAME_M1, in.Timeframe)
 			require.Equal(t, "AMZN", in.Symbol)
 			require.NotNil(t, in.Operand1)
@@ -437,7 +437,7 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 
 			return &pb.UpdateAlertResponse{
 				Alert: &pb.Alert{
-					Id:        50,
+					Id:        "50",
 					Timeframe: in.Timeframe,
 					Symbol:    in.Symbol,
 					Operand1:  in.Operand1,
@@ -470,7 +470,7 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/50", body)
 	setAccountId(c, 3)
-	sl.UpdateStrategyAlert(c, 50)
+	sl.UpdateStrategyAlert(c, "50")
 
 	require.Equal(t, http.StatusOK, w.Code)
 
@@ -478,7 +478,7 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 	err := json.Unmarshal(w.Body.Bytes(), &resp)
 	require.NoError(t, err)
 	require.NotNil(t, resp.Id)
-	require.Equal(t, uint64(50), *resp.Id)
+	require.Equal(t, "50", *resp.Id)
 	require.Equal(t, oapi.M1, resp.Timeframe)
 	require.Equal(t, "AMZN", resp.Symbol)
 	require.Equal(t, oapi.CrossingUp, resp.Operator)
@@ -502,7 +502,7 @@ func TestUpdateStrategyAlert_NoAccountId(t *testing.T) {
 		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/1", body)
-	sl.UpdateStrategyAlert(c, 1)
+	sl.UpdateStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
@@ -512,7 +512,7 @@ func TestUpdateStrategyAlert_InvalidBody(t *testing.T) {
 
 	w, c := newInvalidBodyContext(http.MethodPut, "/strategy/alerts/1")
 	setAccountId(c, 1)
-	sl.UpdateStrategyAlert(c, 1)
+	sl.UpdateStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -540,7 +540,7 @@ func TestUpdateStrategyAlert_GrpcError(t *testing.T) {
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/1", body)
 	setAccountId(c, 1)
-	sl.UpdateStrategyAlert(c, 1)
+	sl.UpdateStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 }
@@ -564,7 +564,7 @@ func TestUpdateStrategyAlert_IncompatibleOperands(t *testing.T) {
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/1", body)
 	setAccountId(c, 1)
-	sl.UpdateStrategyAlert(c, 1)
+	sl.UpdateStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
 }
@@ -577,7 +577,7 @@ func TestDeleteStrategyAlert_Success(t *testing.T) {
 	mock := &mockStrategyClient{
 		deleteAlertFn: func(_ context.Context, in *pb.DeleteAlertRequest, _ ...grpc.CallOption) (*pb.DeleteAlertResponse, error) {
 			require.Equal(t, uint64(8), in.OfAccountId)
-			require.Equal(t, uint64(77), in.AlertId)
+			require.Equal(t, "77", in.AlertId)
 			return &pb.DeleteAlertResponse{
 				OfAccountId: in.OfAccountId,
 				AlertId:     in.AlertId,
@@ -588,7 +588,7 @@ func TestDeleteStrategyAlert_Success(t *testing.T) {
 
 	c, _ := newGinContext(http.MethodDelete, "/strategy/alerts/77", nil)
 	setAccountId(c, 8)
-	sl.DeleteStrategyAlert(c, 77)
+	sl.DeleteStrategyAlert(c, "77")
 
 	// c.Status() sets gin's internal writer status but does not flush to
 	// httptest.ResponseRecorder when no body is written, so check the writer.
@@ -599,7 +599,7 @@ func TestDeleteStrategyAlert_NoAccountId(t *testing.T) {
 	sl := newTestStrategyLogic(&mockStrategyClient{})
 
 	c, w := newGinContext(http.MethodDelete, "/strategy/alerts/1", nil)
-	sl.DeleteStrategyAlert(c, 1)
+	sl.DeleteStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 }
@@ -614,7 +614,7 @@ func TestDeleteStrategyAlert_GrpcError(t *testing.T) {
 
 	c, w := newGinContext(http.MethodDelete, "/strategy/alerts/1", nil)
 	setAccountId(c, 1)
-	sl.DeleteStrategyAlert(c, 1)
+	sl.DeleteStrategyAlert(c, "1")
 
 	require.Equal(t, http.StatusInternalServerError, w.Code)
 }

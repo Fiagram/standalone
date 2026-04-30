@@ -585,7 +585,7 @@ func (*Operand_ConstValue) isOperand_Value() {}
 
 type Alert struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	OfAccountId   uint64                 `protobuf:"varint,2,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
 	Timeframe     Timeframe              `protobuf:"varint,3,opt,name=timeframe,proto3,enum=fiagram.strategy.Timeframe" json:"timeframe,omitempty"`
 	Symbol        string                 `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
@@ -631,11 +631,11 @@ func (*Alert) Descriptor() ([]byte, []int) {
 	return file_api_strategy_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *Alert) GetId() uint64 {
+func (x *Alert) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return 0
+	return ""
 }
 
 func (x *Alert) GetOfAccountId() uint64 {
@@ -974,7 +974,7 @@ func (x *GetAlertsResponse) GetAlerts() []*Alert {
 type GetAlertRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OfAccountId   uint64                 `protobuf:"varint,1,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
-	AlertId       uint64                 `protobuf:"varint,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
+	AlertId       string                 `protobuf:"bytes,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1016,11 +1016,11 @@ func (x *GetAlertRequest) GetOfAccountId() uint64 {
 	return 0
 }
 
-func (x *GetAlertRequest) GetAlertId() uint64 {
+func (x *GetAlertRequest) GetAlertId() string {
 	if x != nil {
 		return x.AlertId
 	}
-	return 0
+	return ""
 }
 
 type GetAlertResponse struct {
@@ -1070,7 +1070,7 @@ func (x *GetAlertResponse) GetAlert() *Alert {
 type UpdateAlertRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OfAccountId   uint64                 `protobuf:"varint,1,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
-	AlertId       uint64                 `protobuf:"varint,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
+	AlertId       string                 `protobuf:"bytes,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
 	Timeframe     Timeframe              `protobuf:"varint,3,opt,name=timeframe,proto3,enum=fiagram.strategy.Timeframe" json:"timeframe,omitempty"`
 	Symbol        string                 `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Operand1      *Operand               `protobuf:"bytes,5,opt,name=operand1,proto3" json:"operand1,omitempty"`
@@ -1120,11 +1120,11 @@ func (x *UpdateAlertRequest) GetOfAccountId() uint64 {
 	return 0
 }
 
-func (x *UpdateAlertRequest) GetAlertId() uint64 {
+func (x *UpdateAlertRequest) GetAlertId() string {
 	if x != nil {
 		return x.AlertId
 	}
-	return 0
+	return ""
 }
 
 func (x *UpdateAlertRequest) GetTimeframe() Timeframe {
@@ -1230,7 +1230,7 @@ func (x *UpdateAlertResponse) GetAlert() *Alert {
 type DeleteAlertRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OfAccountId   uint64                 `protobuf:"varint,1,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
-	AlertId       uint64                 `protobuf:"varint,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
+	AlertId       string                 `protobuf:"bytes,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1272,17 +1272,17 @@ func (x *DeleteAlertRequest) GetOfAccountId() uint64 {
 	return 0
 }
 
-func (x *DeleteAlertRequest) GetAlertId() uint64 {
+func (x *DeleteAlertRequest) GetAlertId() string {
 	if x != nil {
 		return x.AlertId
 	}
-	return 0
+	return ""
 }
 
 type DeleteAlertResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OfAccountId   uint64                 `protobuf:"varint,1,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
-	AlertId       uint64                 `protobuf:"varint,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
+	AlertId       string                 `protobuf:"bytes,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1324,11 +1324,11 @@ func (x *DeleteAlertResponse) GetOfAccountId() uint64 {
 	return 0
 }
 
-func (x *DeleteAlertResponse) GetAlertId() uint64 {
+func (x *DeleteAlertResponse) GetAlertId() string {
 	if x != nil {
 		return x.AlertId
 	}
-	return 0
+	return ""
 }
 
 var File_api_strategy_proto protoreflect.FileDescriptor
@@ -1346,7 +1346,7 @@ const file_api_strategy_proto_rawDesc = "" +
 	"constValueB\a\n" +
 	"\x05value\"\x9c\x04\n" +
 	"\x05Alert\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\x04R\x02id\x12\"\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\"\n" +
 	"\rof_account_id\x18\x02 \x01(\x04R\vofAccountId\x129\n" +
 	"\ttimeframe\x18\x03 \x01(\x0e2\x1b.fiagram.strategy.TimeframeR\ttimeframe\x12\x16\n" +
 	"\x06symbol\x18\x04 \x01(\tR\x06symbol\x125\n" +
@@ -1385,12 +1385,12 @@ const file_api_strategy_proto_rawDesc = "" +
 	"\x06alerts\x18\x01 \x03(\v2\x17.fiagram.strategy.AlertR\x06alerts\"P\n" +
 	"\x0fGetAlertRequest\x12\"\n" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
-	"\balert_id\x18\x02 \x01(\x04R\aalertId\"A\n" +
+	"\balert_id\x18\x02 \x01(\tR\aalertId\"A\n" +
 	"\x10GetAlertResponse\x12-\n" +
 	"\x05alert\x18\x01 \x01(\v2\x17.fiagram.strategy.AlertR\x05alert\"\xbe\x03\n" +
 	"\x12UpdateAlertRequest\x12\"\n" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
-	"\balert_id\x18\x02 \x01(\x04R\aalertId\x129\n" +
+	"\balert_id\x18\x02 \x01(\tR\aalertId\x129\n" +
 	"\ttimeframe\x18\x03 \x01(\x0e2\x1b.fiagram.strategy.TimeframeR\ttimeframe\x12\x16\n" +
 	"\x06symbol\x18\x04 \x01(\tR\x06symbol\x125\n" +
 	"\boperand1\x18\x05 \x01(\v2\x19.fiagram.strategy.OperandR\boperand1\x125\n" +
@@ -1406,10 +1406,10 @@ const file_api_strategy_proto_rawDesc = "" +
 	"\x05alert\x18\x01 \x01(\v2\x17.fiagram.strategy.AlertR\x05alert\"S\n" +
 	"\x12DeleteAlertRequest\x12\"\n" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
-	"\balert_id\x18\x02 \x01(\x04R\aalertId\"T\n" +
+	"\balert_id\x18\x02 \x01(\tR\aalertId\"T\n" +
 	"\x13DeleteAlertResponse\x12\"\n" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
-	"\balert_id\x18\x02 \x01(\x04R\aalertId*U\n" +
+	"\balert_id\x18\x02 \x01(\tR\aalertId*U\n" +
 	"\tTimeframe\x12\x12\n" +
 	"\x0eTIMEFRAME_NONE\x10\x00\x12\x10\n" +
 	"\fTIMEFRAME_D1\x10\x01\x12\x10\n" +

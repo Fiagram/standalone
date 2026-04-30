@@ -461,9 +461,8 @@ components:
       required: true
       description: The unique ID of the trading alert
       schema:
-        type: integer
-        format: uint64
-        minimum: 1
+        type: string
+        minLength: 1
 
   responses:
     # Ref: https://restfulapi.net/http-status-codes/
@@ -794,11 +793,10 @@ components:
       required: [ timeframe, symbol, operand1, operand2, operator, trigger, exp ]
       properties:
         id:
-          type: integer
-          format: uint64
+          type: string
           readOnly: true
           description: Server-generated unique ID
-          example: 1
+          example: "alert-1"
         timeframe:
           $ref: "#/components/schemas/Timeframe"
         symbol:

@@ -82,7 +82,7 @@ message Operand {
 }
 
 message Alert {
-  uint64 id = 1;
+  string id = 1;
   uint64 of_account_id = 2;
   Timeframe timeframe = 3;
   string symbol = 4;
@@ -124,7 +124,7 @@ message GetAlertsResponse {
 
 message GetAlertRequest {
   uint64 of_account_id = 1;
-  uint64 alert_id = 2;
+  string alert_id = 2;
 }
 
 message GetAlertResponse {
@@ -133,7 +133,7 @@ message GetAlertResponse {
 
 message UpdateAlertRequest {
   uint64 of_account_id = 1;
-  uint64 alert_id = 2;
+  string alert_id = 2;
   Timeframe timeframe = 3;
   string symbol = 4;
   Operand operand1 = 5;
@@ -150,10 +150,10 @@ message UpdateAlertResponse {
 
 message DeleteAlertRequest {
   uint64 of_account_id = 1;
-  uint64 alert_id = 2;
+  string alert_id = 2;
 }
 
 message DeleteAlertResponse {
   uint64 of_account_id = 1;
-  uint64 alert_id = 2;
+  string alert_id = 2;
 }

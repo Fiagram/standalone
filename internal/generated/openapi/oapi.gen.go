@@ -237,7 +237,7 @@ type Alert struct {
 	Exp int64 `json:"exp"`
 
 	// Id Server-generated unique ID
-	Id *uint64 `json:"id,omitempty"`
+	Id *string `json:"id,omitempty"`
 
 	// Message Optional message for the alert
 	Message *string `json:"message,omitempty"`
@@ -412,7 +412,7 @@ type Webhook struct {
 }
 
 // AlertId defines model for AlertId.
-type AlertId = uint64
+type AlertId = string
 
 // Limit defines model for Limit.
 type Limit = int
@@ -1136,7 +1136,7 @@ func (siw *ServerInterfaceWrapper) DeleteStrategyAlert(c *gin.Context) {
 	// ------------- Path parameter "alertId" -------------
 	var alertId AlertId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter alertId: %w", err), http.StatusBadRequest)
 		return
@@ -1162,7 +1162,7 @@ func (siw *ServerInterfaceWrapper) GetStrategyAlert(c *gin.Context) {
 	// ------------- Path parameter "alertId" -------------
 	var alertId AlertId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter alertId: %w", err), http.StatusBadRequest)
 		return
@@ -1188,7 +1188,7 @@ func (siw *ServerInterfaceWrapper) UpdateStrategyAlert(c *gin.Context) {
 	// ------------- Path parameter "alertId" -------------
 	var alertId AlertId
 
-	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "alertId", c.Param("alertId"), &alertId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter alertId: %w", err), http.StatusBadRequest)
 		return
