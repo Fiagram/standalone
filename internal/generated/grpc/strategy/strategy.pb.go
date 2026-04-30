@@ -22,24 +22,24 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Alert_Timeframe int32
+type Timeframe int32
 
 const (
-	Alert_TIMEFRAME_NONE Alert_Timeframe = 0
-	Alert_TIMEFRAME_D1   Alert_Timeframe = 1
-	Alert_TIMEFRAME_W1   Alert_Timeframe = 2
-	Alert_TIMEFRAME_M1   Alert_Timeframe = 3
+	Timeframe_TIMEFRAME_NONE Timeframe = 0
+	Timeframe_TIMEFRAME_D1   Timeframe = 1
+	Timeframe_TIMEFRAME_W1   Timeframe = 2
+	Timeframe_TIMEFRAME_M1   Timeframe = 3
 )
 
-// Enum value maps for Alert_Timeframe.
+// Enum value maps for Timeframe.
 var (
-	Alert_Timeframe_name = map[int32]string{
+	Timeframe_name = map[int32]string{
 		0: "TIMEFRAME_NONE",
 		1: "TIMEFRAME_D1",
 		2: "TIMEFRAME_W1",
 		3: "TIMEFRAME_M1",
 	}
-	Alert_Timeframe_value = map[string]int32{
+	Timeframe_value = map[string]int32{
 		"TIMEFRAME_NONE": 0,
 		"TIMEFRAME_D1":   1,
 		"TIMEFRAME_W1":   2,
@@ -47,111 +47,301 @@ var (
 	}
 )
 
-func (x Alert_Timeframe) Enum() *Alert_Timeframe {
-	p := new(Alert_Timeframe)
+func (x Timeframe) Enum() *Timeframe {
+	p := new(Timeframe)
 	*p = x
 	return p
 }
 
-func (x Alert_Timeframe) String() string {
+func (x Timeframe) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Alert_Timeframe) Descriptor() protoreflect.EnumDescriptor {
+func (Timeframe) Descriptor() protoreflect.EnumDescriptor {
 	return file_api_strategy_proto_enumTypes[0].Descriptor()
 }
 
-func (Alert_Timeframe) Type() protoreflect.EnumType {
+func (Timeframe) Type() protoreflect.EnumType {
 	return &file_api_strategy_proto_enumTypes[0]
 }
 
-func (x Alert_Timeframe) Number() protoreflect.EnumNumber {
+func (x Timeframe) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Alert_Timeframe.Descriptor instead.
-func (Alert_Timeframe) EnumDescriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{0, 0}
+// Deprecated: Use Timeframe.Descriptor instead.
+func (Timeframe) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{0}
 }
 
-type Alert_Indicator int32
+type Price int32
 
 const (
-	Alert_INDICATOR_NONE            Alert_Indicator = 0
-	Alert_INDICATOR_CLOSE           Alert_Indicator = 1
-	Alert_INDICATOR_BOLLINGER_BANDS Alert_Indicator = 2
-	Alert_INDICATOR_RSI             Alert_Indicator = 3
-	Alert_INDICATOR_MA10            Alert_Indicator = 4
-	Alert_INDICATOR_MA50            Alert_Indicator = 5
-	Alert_INDICATOR_MA100           Alert_Indicator = 6
-	Alert_INDICATOR_MA200           Alert_Indicator = 7
+	Price_PRICE_NONE  Price = 0
+	Price_PRICE_OPEN  Price = 1
+	Price_PRICE_HIGH  Price = 2
+	Price_PRICE_LOW   Price = 3
+	Price_PRICE_CLOSE Price = 4
 )
 
-// Enum value maps for Alert_Indicator.
+// Enum value maps for Price.
 var (
-	Alert_Indicator_name = map[int32]string{
-		0: "INDICATOR_NONE",
-		1: "INDICATOR_CLOSE",
-		2: "INDICATOR_BOLLINGER_BANDS",
-		3: "INDICATOR_RSI",
-		4: "INDICATOR_MA10",
-		5: "INDICATOR_MA50",
-		6: "INDICATOR_MA100",
-		7: "INDICATOR_MA200",
+	Price_name = map[int32]string{
+		0: "PRICE_NONE",
+		1: "PRICE_OPEN",
+		2: "PRICE_HIGH",
+		3: "PRICE_LOW",
+		4: "PRICE_CLOSE",
 	}
-	Alert_Indicator_value = map[string]int32{
-		"INDICATOR_NONE":            0,
-		"INDICATOR_CLOSE":           1,
-		"INDICATOR_BOLLINGER_BANDS": 2,
-		"INDICATOR_RSI":             3,
-		"INDICATOR_MA10":            4,
-		"INDICATOR_MA50":            5,
-		"INDICATOR_MA100":           6,
-		"INDICATOR_MA200":           7,
+	Price_value = map[string]int32{
+		"PRICE_NONE":  0,
+		"PRICE_OPEN":  1,
+		"PRICE_HIGH":  2,
+		"PRICE_LOW":   3,
+		"PRICE_CLOSE": 4,
 	}
 )
 
-func (x Alert_Indicator) Enum() *Alert_Indicator {
-	p := new(Alert_Indicator)
+func (x Price) Enum() *Price {
+	p := new(Price)
 	*p = x
 	return p
 }
 
-func (x Alert_Indicator) String() string {
+func (x Price) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Alert_Indicator) Descriptor() protoreflect.EnumDescriptor {
+func (Price) Descriptor() protoreflect.EnumDescriptor {
 	return file_api_strategy_proto_enumTypes[1].Descriptor()
 }
 
-func (Alert_Indicator) Type() protoreflect.EnumType {
+func (Price) Type() protoreflect.EnumType {
 	return &file_api_strategy_proto_enumTypes[1]
 }
 
-func (x Alert_Indicator) Number() protoreflect.EnumNumber {
+func (x Price) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Alert_Indicator.Descriptor instead.
-func (Alert_Indicator) EnumDescriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{0, 1}
+// Deprecated: Use Price.Descriptor instead.
+func (Price) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{1}
 }
 
-type Alert_Operator int32
+type BollingerBand int32
 
 const (
-	Alert_OPERATOR_NONE          Alert_Operator = 0
-	Alert_OPERATOR_GREATER_THAN  Alert_Operator = 1
-	Alert_OPERATOR_LESS_THAN     Alert_Operator = 2
-	Alert_OPERATOR_CROSSING_UP   Alert_Operator = 3
-	Alert_OPERATOR_CROSSING_DOWN Alert_Operator = 4
-	Alert_OPERATOR_CROSSING      Alert_Operator = 5
+	BollingerBand_BOLLINGER_BAND_NONE   BollingerBand = 0
+	BollingerBand_BOLLINGER_BAND_MIDDLE BollingerBand = 1
+	BollingerBand_BOLLINGER_BAND_LOWER  BollingerBand = 2
+	BollingerBand_BOLLINGER_BAND_UPPER  BollingerBand = 3
 )
 
-// Enum value maps for Alert_Operator.
+// Enum value maps for BollingerBand.
 var (
-	Alert_Operator_name = map[int32]string{
+	BollingerBand_name = map[int32]string{
+		0: "BOLLINGER_BAND_NONE",
+		1: "BOLLINGER_BAND_MIDDLE",
+		2: "BOLLINGER_BAND_LOWER",
+		3: "BOLLINGER_BAND_UPPER",
+	}
+	BollingerBand_value = map[string]int32{
+		"BOLLINGER_BAND_NONE":   0,
+		"BOLLINGER_BAND_MIDDLE": 1,
+		"BOLLINGER_BAND_LOWER":  2,
+		"BOLLINGER_BAND_UPPER":  3,
+	}
+)
+
+func (x BollingerBand) Enum() *BollingerBand {
+	p := new(BollingerBand)
+	*p = x
+	return p
+}
+
+func (x BollingerBand) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (BollingerBand) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_strategy_proto_enumTypes[2].Descriptor()
+}
+
+func (BollingerBand) Type() protoreflect.EnumType {
+	return &file_api_strategy_proto_enumTypes[2]
+}
+
+func (x BollingerBand) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use BollingerBand.Descriptor instead.
+func (BollingerBand) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{2}
+}
+
+type SimpleMovingAverage int32
+
+const (
+	SimpleMovingAverage_SIMPLE_MOVING_AVERAGE_NONE   SimpleMovingAverage = 0
+	SimpleMovingAverage_SIMPLE_MOVING_AVERAGE_SMA10  SimpleMovingAverage = 1
+	SimpleMovingAverage_SIMPLE_MOVING_AVERAGE_SMA50  SimpleMovingAverage = 2
+	SimpleMovingAverage_SIMPLE_MOVING_AVERAGE_SMA100 SimpleMovingAverage = 3
+	SimpleMovingAverage_SIMPLE_MOVING_AVERAGE_SMA200 SimpleMovingAverage = 4
+)
+
+// Enum value maps for SimpleMovingAverage.
+var (
+	SimpleMovingAverage_name = map[int32]string{
+		0: "SIMPLE_MOVING_AVERAGE_NONE",
+		1: "SIMPLE_MOVING_AVERAGE_SMA10",
+		2: "SIMPLE_MOVING_AVERAGE_SMA50",
+		3: "SIMPLE_MOVING_AVERAGE_SMA100",
+		4: "SIMPLE_MOVING_AVERAGE_SMA200",
+	}
+	SimpleMovingAverage_value = map[string]int32{
+		"SIMPLE_MOVING_AVERAGE_NONE":   0,
+		"SIMPLE_MOVING_AVERAGE_SMA10":  1,
+		"SIMPLE_MOVING_AVERAGE_SMA50":  2,
+		"SIMPLE_MOVING_AVERAGE_SMA100": 3,
+		"SIMPLE_MOVING_AVERAGE_SMA200": 4,
+	}
+)
+
+func (x SimpleMovingAverage) Enum() *SimpleMovingAverage {
+	p := new(SimpleMovingAverage)
+	*p = x
+	return p
+}
+
+func (x SimpleMovingAverage) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (SimpleMovingAverage) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_strategy_proto_enumTypes[3].Descriptor()
+}
+
+func (SimpleMovingAverage) Type() protoreflect.EnumType {
+	return &file_api_strategy_proto_enumTypes[3]
+}
+
+func (x SimpleMovingAverage) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use SimpleMovingAverage.Descriptor instead.
+func (SimpleMovingAverage) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{3}
+}
+
+type RelativeStrengthIndex int32
+
+const (
+	RelativeStrengthIndex_RELATIVE_STRENGTH_INDEX_NONE RelativeStrengthIndex = 0
+	RelativeStrengthIndex_RELATIVE_STRENGTH_INDEX_RSI  RelativeStrengthIndex = 1
+)
+
+// Enum value maps for RelativeStrengthIndex.
+var (
+	RelativeStrengthIndex_name = map[int32]string{
+		0: "RELATIVE_STRENGTH_INDEX_NONE",
+		1: "RELATIVE_STRENGTH_INDEX_RSI",
+	}
+	RelativeStrengthIndex_value = map[string]int32{
+		"RELATIVE_STRENGTH_INDEX_NONE": 0,
+		"RELATIVE_STRENGTH_INDEX_RSI":  1,
+	}
+)
+
+func (x RelativeStrengthIndex) Enum() *RelativeStrengthIndex {
+	p := new(RelativeStrengthIndex)
+	*p = x
+	return p
+}
+
+func (x RelativeStrengthIndex) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RelativeStrengthIndex) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_strategy_proto_enumTypes[4].Descriptor()
+}
+
+func (RelativeStrengthIndex) Type() protoreflect.EnumType {
+	return &file_api_strategy_proto_enumTypes[4]
+}
+
+func (x RelativeStrengthIndex) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RelativeStrengthIndex.Descriptor instead.
+func (RelativeStrengthIndex) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{4}
+}
+
+type Volume int32
+
+const (
+	Volume_VOLUME_NONE   Volume = 0
+	Volume_VOLUME_VOLUME Volume = 1
+)
+
+// Enum value maps for Volume.
+var (
+	Volume_name = map[int32]string{
+		0: "VOLUME_NONE",
+		1: "VOLUME_VOLUME",
+	}
+	Volume_value = map[string]int32{
+		"VOLUME_NONE":   0,
+		"VOLUME_VOLUME": 1,
+	}
+)
+
+func (x Volume) Enum() *Volume {
+	p := new(Volume)
+	*p = x
+	return p
+}
+
+func (x Volume) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (Volume) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_strategy_proto_enumTypes[5].Descriptor()
+}
+
+func (Volume) Type() protoreflect.EnumType {
+	return &file_api_strategy_proto_enumTypes[5]
+}
+
+func (x Volume) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use Volume.Descriptor instead.
+func (Volume) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{5}
+}
+
+type Operator int32
+
+const (
+	Operator_OPERATOR_NONE          Operator = 0
+	Operator_OPERATOR_GREATER_THAN  Operator = 1
+	Operator_OPERATOR_LESS_THAN     Operator = 2
+	Operator_OPERATOR_CROSSING_UP   Operator = 3
+	Operator_OPERATOR_CROSSING_DOWN Operator = 4
+	Operator_OPERATOR_CROSSING      Operator = 5
+)
+
+// Enum value maps for Operator.
+var (
+	Operator_name = map[int32]string{
 		0: "OPERATOR_NONE",
 		1: "OPERATOR_GREATER_THAN",
 		2: "OPERATOR_LESS_THAN",
@@ -159,7 +349,7 @@ var (
 		4: "OPERATOR_CROSSING_DOWN",
 		5: "OPERATOR_CROSSING",
 	}
-	Alert_Operator_value = map[string]int32{
+	Operator_value = map[string]int32{
 		"OPERATOR_NONE":          0,
 		"OPERATOR_GREATER_THAN":  1,
 		"OPERATOR_LESS_THAN":     2,
@@ -169,102 +359,251 @@ var (
 	}
 )
 
-func (x Alert_Operator) Enum() *Alert_Operator {
-	p := new(Alert_Operator)
+func (x Operator) Enum() *Operator {
+	p := new(Operator)
 	*p = x
 	return p
 }
 
-func (x Alert_Operator) String() string {
+func (x Operator) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Alert_Operator) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_strategy_proto_enumTypes[2].Descriptor()
+func (Operator) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_strategy_proto_enumTypes[6].Descriptor()
 }
 
-func (Alert_Operator) Type() protoreflect.EnumType {
-	return &file_api_strategy_proto_enumTypes[2]
+func (Operator) Type() protoreflect.EnumType {
+	return &file_api_strategy_proto_enumTypes[6]
 }
 
-func (x Alert_Operator) Number() protoreflect.EnumNumber {
+func (x Operator) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Alert_Operator.Descriptor instead.
-func (Alert_Operator) EnumDescriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{0, 2}
+// Deprecated: Use Operator.Descriptor instead.
+func (Operator) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{6}
 }
 
-type Alert_Trigger int32
+type Trigger int32
 
 const (
-	Alert_TRIGGER_NONE  Alert_Trigger = 0
-	Alert_TRIGGER_ONCE  Alert_Trigger = 1
-	Alert_TRIGGER_EVERY Alert_Trigger = 2
+	Trigger_TRIGGER_NONE  Trigger = 0
+	Trigger_TRIGGER_ONCE  Trigger = 1
+	Trigger_TRIGGER_EVERY Trigger = 2
 )
 
-// Enum value maps for Alert_Trigger.
+// Enum value maps for Trigger.
 var (
-	Alert_Trigger_name = map[int32]string{
+	Trigger_name = map[int32]string{
 		0: "TRIGGER_NONE",
 		1: "TRIGGER_ONCE",
 		2: "TRIGGER_EVERY",
 	}
-	Alert_Trigger_value = map[string]int32{
+	Trigger_value = map[string]int32{
 		"TRIGGER_NONE":  0,
 		"TRIGGER_ONCE":  1,
 		"TRIGGER_EVERY": 2,
 	}
 )
 
-func (x Alert_Trigger) Enum() *Alert_Trigger {
-	p := new(Alert_Trigger)
+func (x Trigger) Enum() *Trigger {
+	p := new(Trigger)
 	*p = x
 	return p
 }
 
-func (x Alert_Trigger) String() string {
+func (x Trigger) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (Alert_Trigger) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_strategy_proto_enumTypes[3].Descriptor()
+func (Trigger) Descriptor() protoreflect.EnumDescriptor {
+	return file_api_strategy_proto_enumTypes[7].Descriptor()
 }
 
-func (Alert_Trigger) Type() protoreflect.EnumType {
-	return &file_api_strategy_proto_enumTypes[3]
+func (Trigger) Type() protoreflect.EnumType {
+	return &file_api_strategy_proto_enumTypes[7]
 }
 
-func (x Alert_Trigger) Number() protoreflect.EnumNumber {
+func (x Trigger) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use Alert_Trigger.Descriptor instead.
-func (Alert_Trigger) EnumDescriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{0, 3}
+// Deprecated: Use Trigger.Descriptor instead.
+func (Trigger) EnumDescriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{7}
 }
+
+// Operand represents one side of an alert condition.
+// Exactly one of the oneof fields must be set.
+type Operand struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Value:
+	//
+	//	*Operand_Price
+	//	*Operand_BollingerBand
+	//	*Operand_SimpleMovingAverage
+	//	*Operand_RelativeStrengthIndex
+	//	*Operand_Volume
+	//	*Operand_ConstValue
+	Value         isOperand_Value `protobuf_oneof:"value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Operand) Reset() {
+	*x = Operand{}
+	mi := &file_api_strategy_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Operand) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Operand) ProtoMessage() {}
+
+func (x *Operand) ProtoReflect() protoreflect.Message {
+	mi := &file_api_strategy_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Operand.ProtoReflect.Descriptor instead.
+func (*Operand) Descriptor() ([]byte, []int) {
+	return file_api_strategy_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Operand) GetValue() isOperand_Value {
+	if x != nil {
+		return x.Value
+	}
+	return nil
+}
+
+func (x *Operand) GetPrice() Price {
+	if x != nil {
+		if x, ok := x.Value.(*Operand_Price); ok {
+			return x.Price
+		}
+	}
+	return Price_PRICE_NONE
+}
+
+func (x *Operand) GetBollingerBand() BollingerBand {
+	if x != nil {
+		if x, ok := x.Value.(*Operand_BollingerBand); ok {
+			return x.BollingerBand
+		}
+	}
+	return BollingerBand_BOLLINGER_BAND_NONE
+}
+
+func (x *Operand) GetSimpleMovingAverage() SimpleMovingAverage {
+	if x != nil {
+		if x, ok := x.Value.(*Operand_SimpleMovingAverage); ok {
+			return x.SimpleMovingAverage
+		}
+	}
+	return SimpleMovingAverage_SIMPLE_MOVING_AVERAGE_NONE
+}
+
+func (x *Operand) GetRelativeStrengthIndex() RelativeStrengthIndex {
+	if x != nil {
+		if x, ok := x.Value.(*Operand_RelativeStrengthIndex); ok {
+			return x.RelativeStrengthIndex
+		}
+	}
+	return RelativeStrengthIndex_RELATIVE_STRENGTH_INDEX_NONE
+}
+
+func (x *Operand) GetVolume() Volume {
+	if x != nil {
+		if x, ok := x.Value.(*Operand_Volume); ok {
+			return x.Volume
+		}
+	}
+	return Volume_VOLUME_NONE
+}
+
+func (x *Operand) GetConstValue() float64 {
+	if x != nil {
+		if x, ok := x.Value.(*Operand_ConstValue); ok {
+			return x.ConstValue
+		}
+	}
+	return 0
+}
+
+type isOperand_Value interface {
+	isOperand_Value()
+}
+
+type Operand_Price struct {
+	Price Price `protobuf:"varint,1,opt,name=price,proto3,enum=fiagram.strategy.Price,oneof"`
+}
+
+type Operand_BollingerBand struct {
+	BollingerBand BollingerBand `protobuf:"varint,2,opt,name=bollinger_band,json=bollingerBand,proto3,enum=fiagram.strategy.BollingerBand,oneof"`
+}
+
+type Operand_SimpleMovingAverage struct {
+	SimpleMovingAverage SimpleMovingAverage `protobuf:"varint,3,opt,name=simple_moving_average,json=simpleMovingAverage,proto3,enum=fiagram.strategy.SimpleMovingAverage,oneof"`
+}
+
+type Operand_RelativeStrengthIndex struct {
+	RelativeStrengthIndex RelativeStrengthIndex `protobuf:"varint,4,opt,name=relative_strength_index,json=relativeStrengthIndex,proto3,enum=fiagram.strategy.RelativeStrengthIndex,oneof"`
+}
+
+type Operand_Volume struct {
+	Volume Volume `protobuf:"varint,5,opt,name=volume,proto3,enum=fiagram.strategy.Volume,oneof"`
+}
+
+type Operand_ConstValue struct {
+	ConstValue float64 `protobuf:"fixed64,6,opt,name=const_value,json=constValue,proto3,oneof"`
+}
+
+func (*Operand_Price) isOperand_Value() {}
+
+func (*Operand_BollingerBand) isOperand_Value() {}
+
+func (*Operand_SimpleMovingAverage) isOperand_Value() {}
+
+func (*Operand_RelativeStrengthIndex) isOperand_Value() {}
+
+func (*Operand_Volume) isOperand_Value() {}
+
+func (*Operand_ConstValue) isOperand_Value() {}
 
 type Alert struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            uint64                 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 	OfAccountId   uint64                 `protobuf:"varint,2,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
-	Timeframe     Alert_Timeframe        `protobuf:"varint,3,opt,name=timeframe,proto3,enum=fiagram.strategy.Alert_Timeframe" json:"timeframe,omitempty"`
+	Timeframe     Timeframe              `protobuf:"varint,3,opt,name=timeframe,proto3,enum=fiagram.strategy.Timeframe" json:"timeframe,omitempty"`
 	Symbol        string                 `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Indicator     Alert_Indicator        `protobuf:"varint,5,opt,name=indicator,proto3,enum=fiagram.strategy.Alert_Indicator" json:"indicator,omitempty"`
-	Operator      Alert_Operator         `protobuf:"varint,6,opt,name=operator,proto3,enum=fiagram.strategy.Alert_Operator" json:"operator,omitempty"`
-	Trigger       Alert_Trigger          `protobuf:"varint,7,opt,name=trigger,proto3,enum=fiagram.strategy.Alert_Trigger" json:"trigger,omitempty"`
-	Exp           int64                  `protobuf:"varint,8,opt,name=exp,proto3" json:"exp,omitempty"`
-	Message       *string                `protobuf:"bytes,9,opt,name=message,proto3,oneof" json:"message,omitempty"`
-	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	Operand1      *Operand               `protobuf:"bytes,5,opt,name=operand1,proto3" json:"operand1,omitempty"`
+	Operand2      *Operand               `protobuf:"bytes,6,opt,name=operand2,proto3" json:"operand2,omitempty"`
+	Operator      Operator               `protobuf:"varint,7,opt,name=operator,proto3,enum=fiagram.strategy.Operator" json:"operator,omitempty"`
+	Trigger       Trigger                `protobuf:"varint,8,opt,name=trigger,proto3,enum=fiagram.strategy.Trigger" json:"trigger,omitempty"`
+	Exp           int64                  `protobuf:"varint,9,opt,name=exp,proto3" json:"exp,omitempty"`
+	Message       *string                `protobuf:"bytes,10,opt,name=message,proto3,oneof" json:"message,omitempty"`
+	CreatedAt     *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Alert) Reset() {
 	*x = Alert{}
-	mi := &file_api_strategy_proto_msgTypes[0]
+	mi := &file_api_strategy_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -276,7 +615,7 @@ func (x *Alert) String() string {
 func (*Alert) ProtoMessage() {}
 
 func (x *Alert) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[0]
+	mi := &file_api_strategy_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -289,7 +628,7 @@ func (x *Alert) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Alert.ProtoReflect.Descriptor instead.
 func (*Alert) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{0}
+	return file_api_strategy_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Alert) GetId() uint64 {
@@ -306,11 +645,11 @@ func (x *Alert) GetOfAccountId() uint64 {
 	return 0
 }
 
-func (x *Alert) GetTimeframe() Alert_Timeframe {
+func (x *Alert) GetTimeframe() Timeframe {
 	if x != nil {
 		return x.Timeframe
 	}
-	return Alert_TIMEFRAME_NONE
+	return Timeframe_TIMEFRAME_NONE
 }
 
 func (x *Alert) GetSymbol() string {
@@ -320,25 +659,32 @@ func (x *Alert) GetSymbol() string {
 	return ""
 }
 
-func (x *Alert) GetIndicator() Alert_Indicator {
+func (x *Alert) GetOperand1() *Operand {
 	if x != nil {
-		return x.Indicator
+		return x.Operand1
 	}
-	return Alert_INDICATOR_NONE
+	return nil
 }
 
-func (x *Alert) GetOperator() Alert_Operator {
+func (x *Alert) GetOperand2() *Operand {
+	if x != nil {
+		return x.Operand2
+	}
+	return nil
+}
+
+func (x *Alert) GetOperator() Operator {
 	if x != nil {
 		return x.Operator
 	}
-	return Alert_OPERATOR_NONE
+	return Operator_OPERATOR_NONE
 }
 
-func (x *Alert) GetTrigger() Alert_Trigger {
+func (x *Alert) GetTrigger() Trigger {
 	if x != nil {
 		return x.Trigger
 	}
-	return Alert_TRIGGER_NONE
+	return Trigger_TRIGGER_NONE
 }
 
 func (x *Alert) GetExp() int64 {
@@ -372,20 +718,21 @@ func (x *Alert) GetUpdatedAt() *timestamppb.Timestamp {
 type CreateAlertRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OfAccountId   uint64                 `protobuf:"varint,1,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
-	Timeframe     Alert_Timeframe        `protobuf:"varint,2,opt,name=timeframe,proto3,enum=fiagram.strategy.Alert_Timeframe" json:"timeframe,omitempty"`
+	Timeframe     Timeframe              `protobuf:"varint,2,opt,name=timeframe,proto3,enum=fiagram.strategy.Timeframe" json:"timeframe,omitempty"`
 	Symbol        string                 `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Indicator     Alert_Indicator        `protobuf:"varint,4,opt,name=indicator,proto3,enum=fiagram.strategy.Alert_Indicator" json:"indicator,omitempty"`
-	Operator      Alert_Operator         `protobuf:"varint,5,opt,name=operator,proto3,enum=fiagram.strategy.Alert_Operator" json:"operator,omitempty"`
-	Trigger       Alert_Trigger          `protobuf:"varint,6,opt,name=trigger,proto3,enum=fiagram.strategy.Alert_Trigger" json:"trigger,omitempty"`
-	Exp           int64                  `protobuf:"varint,7,opt,name=exp,proto3" json:"exp,omitempty"`
-	Message       *string                `protobuf:"bytes,8,opt,name=message,proto3,oneof" json:"message,omitempty"`
+	Operand1      *Operand               `protobuf:"bytes,4,opt,name=operand1,proto3" json:"operand1,omitempty"`
+	Operand2      *Operand               `protobuf:"bytes,5,opt,name=operand2,proto3" json:"operand2,omitempty"`
+	Operator      Operator               `protobuf:"varint,6,opt,name=operator,proto3,enum=fiagram.strategy.Operator" json:"operator,omitempty"`
+	Trigger       Trigger                `protobuf:"varint,7,opt,name=trigger,proto3,enum=fiagram.strategy.Trigger" json:"trigger,omitempty"`
+	Exp           int64                  `protobuf:"varint,8,opt,name=exp,proto3" json:"exp,omitempty"`
+	Message       *string                `protobuf:"bytes,9,opt,name=message,proto3,oneof" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CreateAlertRequest) Reset() {
 	*x = CreateAlertRequest{}
-	mi := &file_api_strategy_proto_msgTypes[1]
+	mi := &file_api_strategy_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +744,7 @@ func (x *CreateAlertRequest) String() string {
 func (*CreateAlertRequest) ProtoMessage() {}
 
 func (x *CreateAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[1]
+	mi := &file_api_strategy_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +757,7 @@ func (x *CreateAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAlertRequest.ProtoReflect.Descriptor instead.
 func (*CreateAlertRequest) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{1}
+	return file_api_strategy_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *CreateAlertRequest) GetOfAccountId() uint64 {
@@ -420,11 +767,11 @@ func (x *CreateAlertRequest) GetOfAccountId() uint64 {
 	return 0
 }
 
-func (x *CreateAlertRequest) GetTimeframe() Alert_Timeframe {
+func (x *CreateAlertRequest) GetTimeframe() Timeframe {
 	if x != nil {
 		return x.Timeframe
 	}
-	return Alert_TIMEFRAME_NONE
+	return Timeframe_TIMEFRAME_NONE
 }
 
 func (x *CreateAlertRequest) GetSymbol() string {
@@ -434,25 +781,32 @@ func (x *CreateAlertRequest) GetSymbol() string {
 	return ""
 }
 
-func (x *CreateAlertRequest) GetIndicator() Alert_Indicator {
+func (x *CreateAlertRequest) GetOperand1() *Operand {
 	if x != nil {
-		return x.Indicator
+		return x.Operand1
 	}
-	return Alert_INDICATOR_NONE
+	return nil
 }
 
-func (x *CreateAlertRequest) GetOperator() Alert_Operator {
+func (x *CreateAlertRequest) GetOperand2() *Operand {
+	if x != nil {
+		return x.Operand2
+	}
+	return nil
+}
+
+func (x *CreateAlertRequest) GetOperator() Operator {
 	if x != nil {
 		return x.Operator
 	}
-	return Alert_OPERATOR_NONE
+	return Operator_OPERATOR_NONE
 }
 
-func (x *CreateAlertRequest) GetTrigger() Alert_Trigger {
+func (x *CreateAlertRequest) GetTrigger() Trigger {
 	if x != nil {
 		return x.Trigger
 	}
-	return Alert_TRIGGER_NONE
+	return Trigger_TRIGGER_NONE
 }
 
 func (x *CreateAlertRequest) GetExp() int64 {
@@ -478,7 +832,7 @@ type CreateAlertResponse struct {
 
 func (x *CreateAlertResponse) Reset() {
 	*x = CreateAlertResponse{}
-	mi := &file_api_strategy_proto_msgTypes[2]
+	mi := &file_api_strategy_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -490,7 +844,7 @@ func (x *CreateAlertResponse) String() string {
 func (*CreateAlertResponse) ProtoMessage() {}
 
 func (x *CreateAlertResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[2]
+	mi := &file_api_strategy_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -503,7 +857,7 @@ func (x *CreateAlertResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateAlertResponse.ProtoReflect.Descriptor instead.
 func (*CreateAlertResponse) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{2}
+	return file_api_strategy_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *CreateAlertResponse) GetAlert() *Alert {
@@ -524,7 +878,7 @@ type GetAlertsRequest struct {
 
 func (x *GetAlertsRequest) Reset() {
 	*x = GetAlertsRequest{}
-	mi := &file_api_strategy_proto_msgTypes[3]
+	mi := &file_api_strategy_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -536,7 +890,7 @@ func (x *GetAlertsRequest) String() string {
 func (*GetAlertsRequest) ProtoMessage() {}
 
 func (x *GetAlertsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[3]
+	mi := &file_api_strategy_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -549,7 +903,7 @@ func (x *GetAlertsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlertsRequest.ProtoReflect.Descriptor instead.
 func (*GetAlertsRequest) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{3}
+	return file_api_strategy_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *GetAlertsRequest) GetOfAccountId() uint64 {
@@ -582,7 +936,7 @@ type GetAlertsResponse struct {
 
 func (x *GetAlertsResponse) Reset() {
 	*x = GetAlertsResponse{}
-	mi := &file_api_strategy_proto_msgTypes[4]
+	mi := &file_api_strategy_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -594,7 +948,7 @@ func (x *GetAlertsResponse) String() string {
 func (*GetAlertsResponse) ProtoMessage() {}
 
 func (x *GetAlertsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[4]
+	mi := &file_api_strategy_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -607,7 +961,7 @@ func (x *GetAlertsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlertsResponse.ProtoReflect.Descriptor instead.
 func (*GetAlertsResponse) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{4}
+	return file_api_strategy_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetAlertsResponse) GetAlerts() []*Alert {
@@ -627,7 +981,7 @@ type GetAlertRequest struct {
 
 func (x *GetAlertRequest) Reset() {
 	*x = GetAlertRequest{}
-	mi := &file_api_strategy_proto_msgTypes[5]
+	mi := &file_api_strategy_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -639,7 +993,7 @@ func (x *GetAlertRequest) String() string {
 func (*GetAlertRequest) ProtoMessage() {}
 
 func (x *GetAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[5]
+	mi := &file_api_strategy_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -652,7 +1006,7 @@ func (x *GetAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlertRequest.ProtoReflect.Descriptor instead.
 func (*GetAlertRequest) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{5}
+	return file_api_strategy_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetAlertRequest) GetOfAccountId() uint64 {
@@ -678,7 +1032,7 @@ type GetAlertResponse struct {
 
 func (x *GetAlertResponse) Reset() {
 	*x = GetAlertResponse{}
-	mi := &file_api_strategy_proto_msgTypes[6]
+	mi := &file_api_strategy_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -690,7 +1044,7 @@ func (x *GetAlertResponse) String() string {
 func (*GetAlertResponse) ProtoMessage() {}
 
 func (x *GetAlertResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[6]
+	mi := &file_api_strategy_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -703,7 +1057,7 @@ func (x *GetAlertResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAlertResponse.ProtoReflect.Descriptor instead.
 func (*GetAlertResponse) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{6}
+	return file_api_strategy_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetAlertResponse) GetAlert() *Alert {
@@ -717,20 +1071,21 @@ type UpdateAlertRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OfAccountId   uint64                 `protobuf:"varint,1,opt,name=of_account_id,json=ofAccountId,proto3" json:"of_account_id,omitempty"`
 	AlertId       uint64                 `protobuf:"varint,2,opt,name=alert_id,json=alertId,proto3" json:"alert_id,omitempty"`
-	Timeframe     Alert_Timeframe        `protobuf:"varint,3,opt,name=timeframe,proto3,enum=fiagram.strategy.Alert_Timeframe" json:"timeframe,omitempty"`
+	Timeframe     Timeframe              `protobuf:"varint,3,opt,name=timeframe,proto3,enum=fiagram.strategy.Timeframe" json:"timeframe,omitempty"`
 	Symbol        string                 `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Indicator     Alert_Indicator        `protobuf:"varint,5,opt,name=indicator,proto3,enum=fiagram.strategy.Alert_Indicator" json:"indicator,omitempty"`
-	Operator      Alert_Operator         `protobuf:"varint,6,opt,name=operator,proto3,enum=fiagram.strategy.Alert_Operator" json:"operator,omitempty"`
-	Trigger       Alert_Trigger          `protobuf:"varint,7,opt,name=trigger,proto3,enum=fiagram.strategy.Alert_Trigger" json:"trigger,omitempty"`
-	Exp           int64                  `protobuf:"varint,8,opt,name=exp,proto3" json:"exp,omitempty"`
-	Message       *string                `protobuf:"bytes,9,opt,name=message,proto3,oneof" json:"message,omitempty"`
+	Operand1      *Operand               `protobuf:"bytes,5,opt,name=operand1,proto3" json:"operand1,omitempty"`
+	Operand2      *Operand               `protobuf:"bytes,6,opt,name=operand2,proto3" json:"operand2,omitempty"`
+	Operator      Operator               `protobuf:"varint,7,opt,name=operator,proto3,enum=fiagram.strategy.Operator" json:"operator,omitempty"`
+	Trigger       Trigger                `protobuf:"varint,8,opt,name=trigger,proto3,enum=fiagram.strategy.Trigger" json:"trigger,omitempty"`
+	Exp           int64                  `protobuf:"varint,9,opt,name=exp,proto3" json:"exp,omitempty"`
+	Message       *string                `protobuf:"bytes,10,opt,name=message,proto3,oneof" json:"message,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *UpdateAlertRequest) Reset() {
 	*x = UpdateAlertRequest{}
-	mi := &file_api_strategy_proto_msgTypes[7]
+	mi := &file_api_strategy_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -742,7 +1097,7 @@ func (x *UpdateAlertRequest) String() string {
 func (*UpdateAlertRequest) ProtoMessage() {}
 
 func (x *UpdateAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[7]
+	mi := &file_api_strategy_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -755,7 +1110,7 @@ func (x *UpdateAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAlertRequest.ProtoReflect.Descriptor instead.
 func (*UpdateAlertRequest) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{7}
+	return file_api_strategy_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateAlertRequest) GetOfAccountId() uint64 {
@@ -772,11 +1127,11 @@ func (x *UpdateAlertRequest) GetAlertId() uint64 {
 	return 0
 }
 
-func (x *UpdateAlertRequest) GetTimeframe() Alert_Timeframe {
+func (x *UpdateAlertRequest) GetTimeframe() Timeframe {
 	if x != nil {
 		return x.Timeframe
 	}
-	return Alert_TIMEFRAME_NONE
+	return Timeframe_TIMEFRAME_NONE
 }
 
 func (x *UpdateAlertRequest) GetSymbol() string {
@@ -786,25 +1141,32 @@ func (x *UpdateAlertRequest) GetSymbol() string {
 	return ""
 }
 
-func (x *UpdateAlertRequest) GetIndicator() Alert_Indicator {
+func (x *UpdateAlertRequest) GetOperand1() *Operand {
 	if x != nil {
-		return x.Indicator
+		return x.Operand1
 	}
-	return Alert_INDICATOR_NONE
+	return nil
 }
 
-func (x *UpdateAlertRequest) GetOperator() Alert_Operator {
+func (x *UpdateAlertRequest) GetOperand2() *Operand {
+	if x != nil {
+		return x.Operand2
+	}
+	return nil
+}
+
+func (x *UpdateAlertRequest) GetOperator() Operator {
 	if x != nil {
 		return x.Operator
 	}
-	return Alert_OPERATOR_NONE
+	return Operator_OPERATOR_NONE
 }
 
-func (x *UpdateAlertRequest) GetTrigger() Alert_Trigger {
+func (x *UpdateAlertRequest) GetTrigger() Trigger {
 	if x != nil {
 		return x.Trigger
 	}
-	return Alert_TRIGGER_NONE
+	return Trigger_TRIGGER_NONE
 }
 
 func (x *UpdateAlertRequest) GetExp() int64 {
@@ -830,7 +1192,7 @@ type UpdateAlertResponse struct {
 
 func (x *UpdateAlertResponse) Reset() {
 	*x = UpdateAlertResponse{}
-	mi := &file_api_strategy_proto_msgTypes[8]
+	mi := &file_api_strategy_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -842,7 +1204,7 @@ func (x *UpdateAlertResponse) String() string {
 func (*UpdateAlertResponse) ProtoMessage() {}
 
 func (x *UpdateAlertResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[8]
+	mi := &file_api_strategy_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +1217,7 @@ func (x *UpdateAlertResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateAlertResponse.ProtoReflect.Descriptor instead.
 func (*UpdateAlertResponse) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{8}
+	return file_api_strategy_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateAlertResponse) GetAlert() *Alert {
@@ -875,7 +1237,7 @@ type DeleteAlertRequest struct {
 
 func (x *DeleteAlertRequest) Reset() {
 	*x = DeleteAlertRequest{}
-	mi := &file_api_strategy_proto_msgTypes[9]
+	mi := &file_api_strategy_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +1249,7 @@ func (x *DeleteAlertRequest) String() string {
 func (*DeleteAlertRequest) ProtoMessage() {}
 
 func (x *DeleteAlertRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[9]
+	mi := &file_api_strategy_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +1262,7 @@ func (x *DeleteAlertRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAlertRequest.ProtoReflect.Descriptor instead.
 func (*DeleteAlertRequest) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{9}
+	return file_api_strategy_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteAlertRequest) GetOfAccountId() uint64 {
@@ -927,7 +1289,7 @@ type DeleteAlertResponse struct {
 
 func (x *DeleteAlertResponse) Reset() {
 	*x = DeleteAlertResponse{}
-	mi := &file_api_strategy_proto_msgTypes[10]
+	mi := &file_api_strategy_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -939,7 +1301,7 @@ func (x *DeleteAlertResponse) String() string {
 func (*DeleteAlertResponse) ProtoMessage() {}
 
 func (x *DeleteAlertResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_strategy_proto_msgTypes[10]
+	mi := &file_api_strategy_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -952,7 +1314,7 @@ func (x *DeleteAlertResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteAlertResponse.ProtoReflect.Descriptor instead.
 func (*DeleteAlertResponse) Descriptor() ([]byte, []int) {
-	return file_api_strategy_proto_rawDescGZIP(), []int{10}
+	return file_api_strategy_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *DeleteAlertResponse) GetOfAccountId() uint64 {
@@ -973,58 +1335,44 @@ var File_api_strategy_proto protoreflect.FileDescriptor
 
 const file_api_strategy_proto_rawDesc = "" +
 	"\n" +
-	"\x12api/strategy.proto\x12\x10fiagram.strategy\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf5\a\n" +
+	"\x12api/strategy.proto\x12\x10fiagram.strategy\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa4\x03\n" +
+	"\aOperand\x12/\n" +
+	"\x05price\x18\x01 \x01(\x0e2\x17.fiagram.strategy.PriceH\x00R\x05price\x12H\n" +
+	"\x0ebollinger_band\x18\x02 \x01(\x0e2\x1f.fiagram.strategy.BollingerBandH\x00R\rbollingerBand\x12[\n" +
+	"\x15simple_moving_average\x18\x03 \x01(\x0e2%.fiagram.strategy.SimpleMovingAverageH\x00R\x13simpleMovingAverage\x12a\n" +
+	"\x17relative_strength_index\x18\x04 \x01(\x0e2'.fiagram.strategy.RelativeStrengthIndexH\x00R\x15relativeStrengthIndex\x122\n" +
+	"\x06volume\x18\x05 \x01(\x0e2\x18.fiagram.strategy.VolumeH\x00R\x06volume\x12!\n" +
+	"\vconst_value\x18\x06 \x01(\x01H\x00R\n" +
+	"constValueB\a\n" +
+	"\x05value\"\x9c\x04\n" +
 	"\x05Alert\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x04R\x02id\x12\"\n" +
-	"\rof_account_id\x18\x02 \x01(\x04R\vofAccountId\x12?\n" +
-	"\ttimeframe\x18\x03 \x01(\x0e2!.fiagram.strategy.Alert.TimeframeR\ttimeframe\x12\x16\n" +
-	"\x06symbol\x18\x04 \x01(\tR\x06symbol\x12?\n" +
-	"\tindicator\x18\x05 \x01(\x0e2!.fiagram.strategy.Alert.IndicatorR\tindicator\x12<\n" +
-	"\boperator\x18\x06 \x01(\x0e2 .fiagram.strategy.Alert.OperatorR\boperator\x129\n" +
-	"\atrigger\x18\a \x01(\x0e2\x1f.fiagram.strategy.Alert.TriggerR\atrigger\x12\x10\n" +
-	"\x03exp\x18\b \x01(\x03R\x03exp\x12\x1d\n" +
-	"\amessage\x18\t \x01(\tH\x00R\amessage\x88\x01\x01\x129\n" +
+	"\rof_account_id\x18\x02 \x01(\x04R\vofAccountId\x129\n" +
+	"\ttimeframe\x18\x03 \x01(\x0e2\x1b.fiagram.strategy.TimeframeR\ttimeframe\x12\x16\n" +
+	"\x06symbol\x18\x04 \x01(\tR\x06symbol\x125\n" +
+	"\boperand1\x18\x05 \x01(\v2\x19.fiagram.strategy.OperandR\boperand1\x125\n" +
+	"\boperand2\x18\x06 \x01(\v2\x19.fiagram.strategy.OperandR\boperand2\x126\n" +
+	"\boperator\x18\a \x01(\x0e2\x1a.fiagram.strategy.OperatorR\boperator\x123\n" +
+	"\atrigger\x18\b \x01(\x0e2\x19.fiagram.strategy.TriggerR\atrigger\x12\x10\n" +
+	"\x03exp\x18\t \x01(\x03R\x03exp\x12\x1d\n" +
+	"\amessage\x18\n" +
+	" \x01(\tH\x00R\amessage\x88\x01\x01\x129\n" +
 	"\n" +
-	"created_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
+	"created_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x129\n" +
 	"\n" +
-	"updated_at\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAt\"U\n" +
-	"\tTimeframe\x12\x12\n" +
-	"\x0eTIMEFRAME_NONE\x10\x00\x12\x10\n" +
-	"\fTIMEFRAME_D1\x10\x01\x12\x10\n" +
-	"\fTIMEFRAME_W1\x10\x02\x12\x10\n" +
-	"\fTIMEFRAME_M1\x10\x03\"\xb8\x01\n" +
-	"\tIndicator\x12\x12\n" +
-	"\x0eINDICATOR_NONE\x10\x00\x12\x13\n" +
-	"\x0fINDICATOR_CLOSE\x10\x01\x12\x1d\n" +
-	"\x19INDICATOR_BOLLINGER_BANDS\x10\x02\x12\x11\n" +
-	"\rINDICATOR_RSI\x10\x03\x12\x12\n" +
-	"\x0eINDICATOR_MA10\x10\x04\x12\x12\n" +
-	"\x0eINDICATOR_MA50\x10\x05\x12\x13\n" +
-	"\x0fINDICATOR_MA100\x10\x06\x12\x13\n" +
-	"\x0fINDICATOR_MA200\x10\a\"\x9d\x01\n" +
-	"\bOperator\x12\x11\n" +
-	"\rOPERATOR_NONE\x10\x00\x12\x19\n" +
-	"\x15OPERATOR_GREATER_THAN\x10\x01\x12\x16\n" +
-	"\x12OPERATOR_LESS_THAN\x10\x02\x12\x18\n" +
-	"\x14OPERATOR_CROSSING_UP\x10\x03\x12\x1a\n" +
-	"\x16OPERATOR_CROSSING_DOWN\x10\x04\x12\x15\n" +
-	"\x11OPERATOR_CROSSING\x10\x05\"@\n" +
-	"\aTrigger\x12\x10\n" +
-	"\fTRIGGER_NONE\x10\x00\x12\x10\n" +
-	"\fTRIGGER_ONCE\x10\x01\x12\x11\n" +
-	"\rTRIGGER_EVERY\x10\x02B\n" +
+	"updated_at\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\tupdatedAtB\n" +
 	"\n" +
-	"\b_message\"\x88\x03\n" +
+	"\b_message\"\xa3\x03\n" +
 	"\x12CreateAlertRequest\x12\"\n" +
-	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12?\n" +
-	"\ttimeframe\x18\x02 \x01(\x0e2!.fiagram.strategy.Alert.TimeframeR\ttimeframe\x12\x16\n" +
-	"\x06symbol\x18\x03 \x01(\tR\x06symbol\x12?\n" +
-	"\tindicator\x18\x04 \x01(\x0e2!.fiagram.strategy.Alert.IndicatorR\tindicator\x12<\n" +
-	"\boperator\x18\x05 \x01(\x0e2 .fiagram.strategy.Alert.OperatorR\boperator\x129\n" +
-	"\atrigger\x18\x06 \x01(\x0e2\x1f.fiagram.strategy.Alert.TriggerR\atrigger\x12\x10\n" +
-	"\x03exp\x18\a \x01(\x03R\x03exp\x12\x1d\n" +
-	"\amessage\x18\b \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
+	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x129\n" +
+	"\ttimeframe\x18\x02 \x01(\x0e2\x1b.fiagram.strategy.TimeframeR\ttimeframe\x12\x16\n" +
+	"\x06symbol\x18\x03 \x01(\tR\x06symbol\x125\n" +
+	"\boperand1\x18\x04 \x01(\v2\x19.fiagram.strategy.OperandR\boperand1\x125\n" +
+	"\boperand2\x18\x05 \x01(\v2\x19.fiagram.strategy.OperandR\boperand2\x126\n" +
+	"\boperator\x18\x06 \x01(\x0e2\x1a.fiagram.strategy.OperatorR\boperator\x123\n" +
+	"\atrigger\x18\a \x01(\x0e2\x19.fiagram.strategy.TriggerR\atrigger\x12\x10\n" +
+	"\x03exp\x18\b \x01(\x03R\x03exp\x12\x1d\n" +
+	"\amessage\x18\t \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
 	"\b_message\"D\n" +
 	"\x13CreateAlertResponse\x12-\n" +
@@ -1039,17 +1387,19 @@ const file_api_strategy_proto_rawDesc = "" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
 	"\balert_id\x18\x02 \x01(\x04R\aalertId\"A\n" +
 	"\x10GetAlertResponse\x12-\n" +
-	"\x05alert\x18\x01 \x01(\v2\x17.fiagram.strategy.AlertR\x05alert\"\xa3\x03\n" +
+	"\x05alert\x18\x01 \x01(\v2\x17.fiagram.strategy.AlertR\x05alert\"\xbe\x03\n" +
 	"\x12UpdateAlertRequest\x12\"\n" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
-	"\balert_id\x18\x02 \x01(\x04R\aalertId\x12?\n" +
-	"\ttimeframe\x18\x03 \x01(\x0e2!.fiagram.strategy.Alert.TimeframeR\ttimeframe\x12\x16\n" +
-	"\x06symbol\x18\x04 \x01(\tR\x06symbol\x12?\n" +
-	"\tindicator\x18\x05 \x01(\x0e2!.fiagram.strategy.Alert.IndicatorR\tindicator\x12<\n" +
-	"\boperator\x18\x06 \x01(\x0e2 .fiagram.strategy.Alert.OperatorR\boperator\x129\n" +
-	"\atrigger\x18\a \x01(\x0e2\x1f.fiagram.strategy.Alert.TriggerR\atrigger\x12\x10\n" +
-	"\x03exp\x18\b \x01(\x03R\x03exp\x12\x1d\n" +
-	"\amessage\x18\t \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
+	"\balert_id\x18\x02 \x01(\x04R\aalertId\x129\n" +
+	"\ttimeframe\x18\x03 \x01(\x0e2\x1b.fiagram.strategy.TimeframeR\ttimeframe\x12\x16\n" +
+	"\x06symbol\x18\x04 \x01(\tR\x06symbol\x125\n" +
+	"\boperand1\x18\x05 \x01(\v2\x19.fiagram.strategy.OperandR\boperand1\x125\n" +
+	"\boperand2\x18\x06 \x01(\v2\x19.fiagram.strategy.OperandR\boperand2\x126\n" +
+	"\boperator\x18\a \x01(\x0e2\x1a.fiagram.strategy.OperatorR\boperator\x123\n" +
+	"\atrigger\x18\b \x01(\x0e2\x19.fiagram.strategy.TriggerR\atrigger\x12\x10\n" +
+	"\x03exp\x18\t \x01(\x03R\x03exp\x12\x1d\n" +
+	"\amessage\x18\n" +
+	" \x01(\tH\x00R\amessage\x88\x01\x01B\n" +
 	"\n" +
 	"\b_message\"D\n" +
 	"\x13UpdateAlertResponse\x12-\n" +
@@ -1059,7 +1409,49 @@ const file_api_strategy_proto_rawDesc = "" +
 	"\balert_id\x18\x02 \x01(\x04R\aalertId\"T\n" +
 	"\x13DeleteAlertResponse\x12\"\n" +
 	"\rof_account_id\x18\x01 \x01(\x04R\vofAccountId\x12\x19\n" +
-	"\balert_id\x18\x02 \x01(\x04R\aalertId2\xd1\x03\n" +
+	"\balert_id\x18\x02 \x01(\x04R\aalertId*U\n" +
+	"\tTimeframe\x12\x12\n" +
+	"\x0eTIMEFRAME_NONE\x10\x00\x12\x10\n" +
+	"\fTIMEFRAME_D1\x10\x01\x12\x10\n" +
+	"\fTIMEFRAME_W1\x10\x02\x12\x10\n" +
+	"\fTIMEFRAME_M1\x10\x03*W\n" +
+	"\x05Price\x12\x0e\n" +
+	"\n" +
+	"PRICE_NONE\x10\x00\x12\x0e\n" +
+	"\n" +
+	"PRICE_OPEN\x10\x01\x12\x0e\n" +
+	"\n" +
+	"PRICE_HIGH\x10\x02\x12\r\n" +
+	"\tPRICE_LOW\x10\x03\x12\x0f\n" +
+	"\vPRICE_CLOSE\x10\x04*w\n" +
+	"\rBollingerBand\x12\x17\n" +
+	"\x13BOLLINGER_BAND_NONE\x10\x00\x12\x19\n" +
+	"\x15BOLLINGER_BAND_MIDDLE\x10\x01\x12\x18\n" +
+	"\x14BOLLINGER_BAND_LOWER\x10\x02\x12\x18\n" +
+	"\x14BOLLINGER_BAND_UPPER\x10\x03*\xbb\x01\n" +
+	"\x13SimpleMovingAverage\x12\x1e\n" +
+	"\x1aSIMPLE_MOVING_AVERAGE_NONE\x10\x00\x12\x1f\n" +
+	"\x1bSIMPLE_MOVING_AVERAGE_SMA10\x10\x01\x12\x1f\n" +
+	"\x1bSIMPLE_MOVING_AVERAGE_SMA50\x10\x02\x12 \n" +
+	"\x1cSIMPLE_MOVING_AVERAGE_SMA100\x10\x03\x12 \n" +
+	"\x1cSIMPLE_MOVING_AVERAGE_SMA200\x10\x04*Z\n" +
+	"\x15RelativeStrengthIndex\x12 \n" +
+	"\x1cRELATIVE_STRENGTH_INDEX_NONE\x10\x00\x12\x1f\n" +
+	"\x1bRELATIVE_STRENGTH_INDEX_RSI\x10\x01*,\n" +
+	"\x06Volume\x12\x0f\n" +
+	"\vVOLUME_NONE\x10\x00\x12\x11\n" +
+	"\rVOLUME_VOLUME\x10\x01*\x9d\x01\n" +
+	"\bOperator\x12\x11\n" +
+	"\rOPERATOR_NONE\x10\x00\x12\x19\n" +
+	"\x15OPERATOR_GREATER_THAN\x10\x01\x12\x16\n" +
+	"\x12OPERATOR_LESS_THAN\x10\x02\x12\x18\n" +
+	"\x14OPERATOR_CROSSING_UP\x10\x03\x12\x1a\n" +
+	"\x16OPERATOR_CROSSING_DOWN\x10\x04\x12\x15\n" +
+	"\x11OPERATOR_CROSSING\x10\x05*@\n" +
+	"\aTrigger\x12\x10\n" +
+	"\fTRIGGER_NONE\x10\x00\x12\x10\n" +
+	"\fTRIGGER_ONCE\x10\x01\x12\x11\n" +
+	"\rTRIGGER_EVERY\x10\x022\xd1\x03\n" +
 	"\bStrategy\x12\\\n" +
 	"\vCreateAlert\x12$.fiagram.strategy.CreateAlertRequest\x1a%.fiagram.strategy.CreateAlertResponse\"\x00\x12V\n" +
 	"\tGetAlerts\x12\".fiagram.strategy.GetAlertsRequest\x1a#.fiagram.strategy.GetAlertsResponse\"\x00\x12S\n" +
@@ -1079,60 +1471,73 @@ func file_api_strategy_proto_rawDescGZIP() []byte {
 	return file_api_strategy_proto_rawDescData
 }
 
-var file_api_strategy_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_api_strategy_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_api_strategy_proto_enumTypes = make([]protoimpl.EnumInfo, 8)
+var file_api_strategy_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_api_strategy_proto_goTypes = []any{
-	(Alert_Timeframe)(0),          // 0: fiagram.strategy.Alert.Timeframe
-	(Alert_Indicator)(0),          // 1: fiagram.strategy.Alert.Indicator
-	(Alert_Operator)(0),           // 2: fiagram.strategy.Alert.Operator
-	(Alert_Trigger)(0),            // 3: fiagram.strategy.Alert.Trigger
-	(*Alert)(nil),                 // 4: fiagram.strategy.Alert
-	(*CreateAlertRequest)(nil),    // 5: fiagram.strategy.CreateAlertRequest
-	(*CreateAlertResponse)(nil),   // 6: fiagram.strategy.CreateAlertResponse
-	(*GetAlertsRequest)(nil),      // 7: fiagram.strategy.GetAlertsRequest
-	(*GetAlertsResponse)(nil),     // 8: fiagram.strategy.GetAlertsResponse
-	(*GetAlertRequest)(nil),       // 9: fiagram.strategy.GetAlertRequest
-	(*GetAlertResponse)(nil),      // 10: fiagram.strategy.GetAlertResponse
-	(*UpdateAlertRequest)(nil),    // 11: fiagram.strategy.UpdateAlertRequest
-	(*UpdateAlertResponse)(nil),   // 12: fiagram.strategy.UpdateAlertResponse
-	(*DeleteAlertRequest)(nil),    // 13: fiagram.strategy.DeleteAlertRequest
-	(*DeleteAlertResponse)(nil),   // 14: fiagram.strategy.DeleteAlertResponse
-	(*timestamppb.Timestamp)(nil), // 15: google.protobuf.Timestamp
+	(Timeframe)(0),                // 0: fiagram.strategy.Timeframe
+	(Price)(0),                    // 1: fiagram.strategy.Price
+	(BollingerBand)(0),            // 2: fiagram.strategy.BollingerBand
+	(SimpleMovingAverage)(0),      // 3: fiagram.strategy.SimpleMovingAverage
+	(RelativeStrengthIndex)(0),    // 4: fiagram.strategy.RelativeStrengthIndex
+	(Volume)(0),                   // 5: fiagram.strategy.Volume
+	(Operator)(0),                 // 6: fiagram.strategy.Operator
+	(Trigger)(0),                  // 7: fiagram.strategy.Trigger
+	(*Operand)(nil),               // 8: fiagram.strategy.Operand
+	(*Alert)(nil),                 // 9: fiagram.strategy.Alert
+	(*CreateAlertRequest)(nil),    // 10: fiagram.strategy.CreateAlertRequest
+	(*CreateAlertResponse)(nil),   // 11: fiagram.strategy.CreateAlertResponse
+	(*GetAlertsRequest)(nil),      // 12: fiagram.strategy.GetAlertsRequest
+	(*GetAlertsResponse)(nil),     // 13: fiagram.strategy.GetAlertsResponse
+	(*GetAlertRequest)(nil),       // 14: fiagram.strategy.GetAlertRequest
+	(*GetAlertResponse)(nil),      // 15: fiagram.strategy.GetAlertResponse
+	(*UpdateAlertRequest)(nil),    // 16: fiagram.strategy.UpdateAlertRequest
+	(*UpdateAlertResponse)(nil),   // 17: fiagram.strategy.UpdateAlertResponse
+	(*DeleteAlertRequest)(nil),    // 18: fiagram.strategy.DeleteAlertRequest
+	(*DeleteAlertResponse)(nil),   // 19: fiagram.strategy.DeleteAlertResponse
+	(*timestamppb.Timestamp)(nil), // 20: google.protobuf.Timestamp
 }
 var file_api_strategy_proto_depIdxs = []int32{
-	0,  // 0: fiagram.strategy.Alert.timeframe:type_name -> fiagram.strategy.Alert.Timeframe
-	1,  // 1: fiagram.strategy.Alert.indicator:type_name -> fiagram.strategy.Alert.Indicator
-	2,  // 2: fiagram.strategy.Alert.operator:type_name -> fiagram.strategy.Alert.Operator
-	3,  // 3: fiagram.strategy.Alert.trigger:type_name -> fiagram.strategy.Alert.Trigger
-	15, // 4: fiagram.strategy.Alert.created_at:type_name -> google.protobuf.Timestamp
-	15, // 5: fiagram.strategy.Alert.updated_at:type_name -> google.protobuf.Timestamp
-	0,  // 6: fiagram.strategy.CreateAlertRequest.timeframe:type_name -> fiagram.strategy.Alert.Timeframe
-	1,  // 7: fiagram.strategy.CreateAlertRequest.indicator:type_name -> fiagram.strategy.Alert.Indicator
-	2,  // 8: fiagram.strategy.CreateAlertRequest.operator:type_name -> fiagram.strategy.Alert.Operator
-	3,  // 9: fiagram.strategy.CreateAlertRequest.trigger:type_name -> fiagram.strategy.Alert.Trigger
-	4,  // 10: fiagram.strategy.CreateAlertResponse.alert:type_name -> fiagram.strategy.Alert
-	4,  // 11: fiagram.strategy.GetAlertsResponse.alerts:type_name -> fiagram.strategy.Alert
-	4,  // 12: fiagram.strategy.GetAlertResponse.alert:type_name -> fiagram.strategy.Alert
-	0,  // 13: fiagram.strategy.UpdateAlertRequest.timeframe:type_name -> fiagram.strategy.Alert.Timeframe
-	1,  // 14: fiagram.strategy.UpdateAlertRequest.indicator:type_name -> fiagram.strategy.Alert.Indicator
-	2,  // 15: fiagram.strategy.UpdateAlertRequest.operator:type_name -> fiagram.strategy.Alert.Operator
-	3,  // 16: fiagram.strategy.UpdateAlertRequest.trigger:type_name -> fiagram.strategy.Alert.Trigger
-	4,  // 17: fiagram.strategy.UpdateAlertResponse.alert:type_name -> fiagram.strategy.Alert
-	5,  // 18: fiagram.strategy.Strategy.CreateAlert:input_type -> fiagram.strategy.CreateAlertRequest
-	7,  // 19: fiagram.strategy.Strategy.GetAlerts:input_type -> fiagram.strategy.GetAlertsRequest
-	9,  // 20: fiagram.strategy.Strategy.GetAlert:input_type -> fiagram.strategy.GetAlertRequest
-	11, // 21: fiagram.strategy.Strategy.UpdateAlert:input_type -> fiagram.strategy.UpdateAlertRequest
-	13, // 22: fiagram.strategy.Strategy.DeleteAlert:input_type -> fiagram.strategy.DeleteAlertRequest
-	6,  // 23: fiagram.strategy.Strategy.CreateAlert:output_type -> fiagram.strategy.CreateAlertResponse
-	8,  // 24: fiagram.strategy.Strategy.GetAlerts:output_type -> fiagram.strategy.GetAlertsResponse
-	10, // 25: fiagram.strategy.Strategy.GetAlert:output_type -> fiagram.strategy.GetAlertResponse
-	12, // 26: fiagram.strategy.Strategy.UpdateAlert:output_type -> fiagram.strategy.UpdateAlertResponse
-	14, // 27: fiagram.strategy.Strategy.DeleteAlert:output_type -> fiagram.strategy.DeleteAlertResponse
-	23, // [23:28] is the sub-list for method output_type
-	18, // [18:23] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	1,  // 0: fiagram.strategy.Operand.price:type_name -> fiagram.strategy.Price
+	2,  // 1: fiagram.strategy.Operand.bollinger_band:type_name -> fiagram.strategy.BollingerBand
+	3,  // 2: fiagram.strategy.Operand.simple_moving_average:type_name -> fiagram.strategy.SimpleMovingAverage
+	4,  // 3: fiagram.strategy.Operand.relative_strength_index:type_name -> fiagram.strategy.RelativeStrengthIndex
+	5,  // 4: fiagram.strategy.Operand.volume:type_name -> fiagram.strategy.Volume
+	0,  // 5: fiagram.strategy.Alert.timeframe:type_name -> fiagram.strategy.Timeframe
+	8,  // 6: fiagram.strategy.Alert.operand1:type_name -> fiagram.strategy.Operand
+	8,  // 7: fiagram.strategy.Alert.operand2:type_name -> fiagram.strategy.Operand
+	6,  // 8: fiagram.strategy.Alert.operator:type_name -> fiagram.strategy.Operator
+	7,  // 9: fiagram.strategy.Alert.trigger:type_name -> fiagram.strategy.Trigger
+	20, // 10: fiagram.strategy.Alert.created_at:type_name -> google.protobuf.Timestamp
+	20, // 11: fiagram.strategy.Alert.updated_at:type_name -> google.protobuf.Timestamp
+	0,  // 12: fiagram.strategy.CreateAlertRequest.timeframe:type_name -> fiagram.strategy.Timeframe
+	8,  // 13: fiagram.strategy.CreateAlertRequest.operand1:type_name -> fiagram.strategy.Operand
+	8,  // 14: fiagram.strategy.CreateAlertRequest.operand2:type_name -> fiagram.strategy.Operand
+	6,  // 15: fiagram.strategy.CreateAlertRequest.operator:type_name -> fiagram.strategy.Operator
+	7,  // 16: fiagram.strategy.CreateAlertRequest.trigger:type_name -> fiagram.strategy.Trigger
+	9,  // 17: fiagram.strategy.CreateAlertResponse.alert:type_name -> fiagram.strategy.Alert
+	9,  // 18: fiagram.strategy.GetAlertsResponse.alerts:type_name -> fiagram.strategy.Alert
+	9,  // 19: fiagram.strategy.GetAlertResponse.alert:type_name -> fiagram.strategy.Alert
+	0,  // 20: fiagram.strategy.UpdateAlertRequest.timeframe:type_name -> fiagram.strategy.Timeframe
+	8,  // 21: fiagram.strategy.UpdateAlertRequest.operand1:type_name -> fiagram.strategy.Operand
+	8,  // 22: fiagram.strategy.UpdateAlertRequest.operand2:type_name -> fiagram.strategy.Operand
+	6,  // 23: fiagram.strategy.UpdateAlertRequest.operator:type_name -> fiagram.strategy.Operator
+	7,  // 24: fiagram.strategy.UpdateAlertRequest.trigger:type_name -> fiagram.strategy.Trigger
+	9,  // 25: fiagram.strategy.UpdateAlertResponse.alert:type_name -> fiagram.strategy.Alert
+	10, // 26: fiagram.strategy.Strategy.CreateAlert:input_type -> fiagram.strategy.CreateAlertRequest
+	12, // 27: fiagram.strategy.Strategy.GetAlerts:input_type -> fiagram.strategy.GetAlertsRequest
+	14, // 28: fiagram.strategy.Strategy.GetAlert:input_type -> fiagram.strategy.GetAlertRequest
+	16, // 29: fiagram.strategy.Strategy.UpdateAlert:input_type -> fiagram.strategy.UpdateAlertRequest
+	18, // 30: fiagram.strategy.Strategy.DeleteAlert:input_type -> fiagram.strategy.DeleteAlertRequest
+	11, // 31: fiagram.strategy.Strategy.CreateAlert:output_type -> fiagram.strategy.CreateAlertResponse
+	13, // 32: fiagram.strategy.Strategy.GetAlerts:output_type -> fiagram.strategy.GetAlertsResponse
+	15, // 33: fiagram.strategy.Strategy.GetAlert:output_type -> fiagram.strategy.GetAlertResponse
+	17, // 34: fiagram.strategy.Strategy.UpdateAlert:output_type -> fiagram.strategy.UpdateAlertResponse
+	19, // 35: fiagram.strategy.Strategy.DeleteAlert:output_type -> fiagram.strategy.DeleteAlertResponse
+	31, // [31:36] is the sub-list for method output_type
+	26, // [26:31] is the sub-list for method input_type
+	26, // [26:26] is the sub-list for extension type_name
+	26, // [26:26] is the sub-list for extension extendee
+	0,  // [0:26] is the sub-list for field type_name
 }
 
 func init() { file_api_strategy_proto_init() }
@@ -1140,16 +1545,24 @@ func file_api_strategy_proto_init() {
 	if File_api_strategy_proto != nil {
 		return
 	}
-	file_api_strategy_proto_msgTypes[0].OneofWrappers = []any{}
+	file_api_strategy_proto_msgTypes[0].OneofWrappers = []any{
+		(*Operand_Price)(nil),
+		(*Operand_BollingerBand)(nil),
+		(*Operand_SimpleMovingAverage)(nil),
+		(*Operand_RelativeStrengthIndex)(nil),
+		(*Operand_Volume)(nil),
+		(*Operand_ConstValue)(nil),
+	}
 	file_api_strategy_proto_msgTypes[1].OneofWrappers = []any{}
-	file_api_strategy_proto_msgTypes[7].OneofWrappers = []any{}
+	file_api_strategy_proto_msgTypes[2].OneofWrappers = []any{}
+	file_api_strategy_proto_msgTypes[8].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_strategy_proto_rawDesc), len(file_api_strategy_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   11,
+			NumEnums:      8,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

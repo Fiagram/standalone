@@ -128,20 +128,20 @@ func (e Role) Valid() bool {
 
 // Defines values for SimpleMovingAverage.
 const (
-	Ma100 SimpleMovingAverage = "ma100"
-	Ma200 SimpleMovingAverage = "ma200"
-	Sma10 SimpleMovingAverage = "sma10"
-	Sma50 SimpleMovingAverage = "sma50"
+	Sma10  SimpleMovingAverage = "sma10"
+	Sma100 SimpleMovingAverage = "sma100"
+	Sma200 SimpleMovingAverage = "sma200"
+	Sma50  SimpleMovingAverage = "sma50"
 )
 
 // Valid indicates whether the value is a known member of the SimpleMovingAverage enum.
 func (e SimpleMovingAverage) Valid() bool {
 	switch e {
-	case Ma100:
-		return true
-	case Ma200:
-		return true
 	case Sma10:
+		return true
+	case Sma100:
+		return true
+	case Sma200:
 		return true
 	case Sma50:
 		return true

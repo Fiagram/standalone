@@ -32,7 +32,7 @@ func NewClient(
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		logger.With(zap.Error(err)).Error("failed to init grpc connection")
+		logger.Error("failed to init grpc connection", zap.Error(err))
 		return nil, fmt.Errorf("failed to init grpc connection")
 	}
 	stub := pb.NewStrategyClient(conn)

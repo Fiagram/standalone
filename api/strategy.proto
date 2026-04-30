@@ -13,62 +13,99 @@ service Strategy {
   rpc DeleteAlert(DeleteAlertRequest) returns (DeleteAlertResponse) {}
 }
 
+enum Timeframe {
+  TIMEFRAME_NONE = 0;
+  TIMEFRAME_D1 = 1;
+  TIMEFRAME_W1 = 2;
+  TIMEFRAME_M1 = 3;
+}
+
+enum Price {
+  PRICE_NONE = 0;
+  PRICE_OPEN = 1;
+  PRICE_HIGH = 2;
+  PRICE_LOW = 3;
+  PRICE_CLOSE = 4;
+}
+
+enum BollingerBand {
+  BOLLINGER_BAND_NONE = 0;
+  BOLLINGER_BAND_MIDDLE = 1;
+  BOLLINGER_BAND_LOWER = 2;
+  BOLLINGER_BAND_UPPER = 3;
+}
+
+enum SimpleMovingAverage {
+  SIMPLE_MOVING_AVERAGE_NONE = 0;
+  SIMPLE_MOVING_AVERAGE_SMA10 = 1;
+  SIMPLE_MOVING_AVERAGE_SMA50 = 2;
+  SIMPLE_MOVING_AVERAGE_SMA100 = 3;
+  SIMPLE_MOVING_AVERAGE_SMA200 = 4;
+}
+
+enum RelativeStrengthIndex {
+  RELATIVE_STRENGTH_INDEX_NONE = 0;
+  RELATIVE_STRENGTH_INDEX_RSI = 1;
+}
+
+enum Volume {
+  VOLUME_NONE = 0;
+  VOLUME_VOLUME = 1;
+}
+
+enum Operator {
+  OPERATOR_NONE = 0;
+  OPERATOR_GREATER_THAN = 1;
+  OPERATOR_LESS_THAN = 2;
+  OPERATOR_CROSSING_UP = 3;
+  OPERATOR_CROSSING_DOWN = 4;
+  OPERATOR_CROSSING = 5;
+}
+
+enum Trigger {
+  TRIGGER_NONE = 0;
+  TRIGGER_ONCE = 1;
+  TRIGGER_EVERY = 2;
+}
+
+// Operand represents one side of an alert condition.
+// Exactly one of the oneof fields must be set.
+message Operand {
+  oneof value {
+    Price price = 1;
+    BollingerBand bollinger_band = 2;
+    SimpleMovingAverage simple_moving_average = 3;
+    RelativeStrengthIndex relative_strength_index = 4;
+    Volume volume = 5;
+    double const_value = 6;
+  }
+}
+
 message Alert {
-  enum Timeframe {
-    TIMEFRAME_NONE = 0;
-    TIMEFRAME_D1 = 1;
-    TIMEFRAME_W1 = 2;
-    TIMEFRAME_M1 = 3;
-  }
-
-  enum Indicator {
-    INDICATOR_NONE = 0;
-    INDICATOR_CLOSE = 1;
-    INDICATOR_BOLLINGER_BANDS = 2;
-    INDICATOR_RSI = 3;
-    INDICATOR_MA10 = 4;
-    INDICATOR_MA50 = 5;
-    INDICATOR_MA100 = 6;
-    INDICATOR_MA200 = 7;
-  }
-
-  enum Operator {
-    OPERATOR_NONE = 0;
-    OPERATOR_GREATER_THAN = 1;
-    OPERATOR_LESS_THAN = 2;
-    OPERATOR_CROSSING_UP = 3;
-    OPERATOR_CROSSING_DOWN = 4;
-    OPERATOR_CROSSING = 5;
-  }
-
-  enum Trigger {
-    TRIGGER_NONE = 0;
-    TRIGGER_ONCE = 1;
-    TRIGGER_EVERY = 2;
-  }
-
   uint64 id = 1;
   uint64 of_account_id = 2;
   Timeframe timeframe = 3;
   string symbol = 4;
-  Indicator indicator = 5;
-  Operator operator = 6;
-  Trigger trigger = 7;
-  int64 exp = 8;
-  optional string message = 9;
-  google.protobuf.Timestamp created_at = 10;
-  google.protobuf.Timestamp updated_at = 11;
+  Operand operand1 = 5;
+  Operand operand2 = 6;
+  Operator operator = 7;
+  Trigger trigger = 8;
+  int64 exp = 9;
+  optional string message = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
 }
 
 message CreateAlertRequest {
   uint64 of_account_id = 1;
-  Alert.Timeframe timeframe = 2;
+  Timeframe timeframe = 2;
   string symbol = 3;
-  Alert.Indicator indicator = 4;
-  Alert.Operator operator = 5;
-  Alert.Trigger trigger = 6;
-  int64 exp = 7;
-  optional string message = 8;
+  Operand operand1 = 4;
+  Operand operand2 = 5;
+  Operator operator = 6;
+  Trigger trigger = 7;
+  int64 exp = 8;
+  optional string message = 9;
 }
 
 message CreateAlertResponse {
@@ -97,13 +134,14 @@ message GetAlertResponse {
 message UpdateAlertRequest {
   uint64 of_account_id = 1;
   uint64 alert_id = 2;
-  Alert.Timeframe timeframe = 3;
+  Timeframe timeframe = 3;
   string symbol = 4;
-  Alert.Indicator indicator = 5;
-  Alert.Operator operator = 6;
-  Alert.Trigger trigger = 7;
-  int64 exp = 8;
-  optional string message = 9;
+  Operand operand1 = 5;
+  Operand operand2 = 6;
+  Operator operator = 7;
+  Trigger trigger = 8;
+  int64 exp = 9;
+  optional string message = 10;
 }
 
 message UpdateAlertResponse {

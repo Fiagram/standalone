@@ -728,8 +728,8 @@ components:
       enum:
         - sma10
         - sma50
-        - ma100
-        - ma200
+        - sma100
+        - sma200
       example: sma50
 
     RelativeStrengthIndex:

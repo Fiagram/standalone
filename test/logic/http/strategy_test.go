@@ -82,13 +82,14 @@ func sampleProtoAlert() *pb.Alert {
 	msg := "test alert message"
 	return &pb.Alert{
 		Id:        1,
-		Timeframe: pb.Alert_TIMEFRAME_D1,
+		Timeframe: pb.Timeframe_TIMEFRAME_D1,
 		Symbol:    "AAPL",
-		Indicator: pb.Alert_INDICATOR_CLOSE,
-		Operator:  pb.Alert_OPERATOR_GREATER_THAN,
-		Trigger:   pb.Alert_TRIGGER_ONCE,
+		Operand1:  &pb.Operand{Value: &pb.Operand_Price{Price: pb.Price_PRICE_CLOSE}},
+		Operator:  pb.Operator_OPERATOR_GREATER_THAN,
+		Trigger:   pb.Trigger_TRIGGER_ONCE,
 		Exp:       1700000000,
 		Message:   &msg,
+		Operand2:  &pb.Operand{Value: &pb.Operand_ConstValue{ConstValue: 150.0}},
 		CreatedAt: timestamppb.Now(),
 		UpdatedAt: timestamppb.Now(),
 	}
@@ -123,7 +124,6 @@ func TestGetStrategyAlerts_Success_Defaults(t *testing.T) {
 	require.Len(t, resp, 1)
 	require.Equal(t, "AAPL", resp[0].Symbol)
 	require.Equal(t, oapi.D1, resp[0].Timeframe)
-	require.Equal(t, oapi.Close, resp[0].Indicator)
 	require.Equal(t, oapi.GreaterThan, resp[0].Operator)
 	require.Equal(t, oapi.Once, resp[0].Trigger)
 	require.Equal(t, int64(1700000000), resp[0].Exp)
@@ -131,6 +131,16 @@ func TestGetStrategyAlerts_Success_Defaults(t *testing.T) {
 	require.Equal(t, "test alert message", *resp[0].Message)
 	require.NotNil(t, resp[0].CreatedAt)
 	require.NotNil(t, resp[0].UpdatedAt)
+
+	// operand1 should be "close" (price-based)
+	op1Raw, err := resp[0].Operand1.MarshalJSON()
+	require.NoError(t, err)
+	require.JSONEq(t, `"close"`, string(op1Raw))
+
+	// operand2 should be 150.0 (const value)
+	op2Raw, err := resp[0].Operand2.MarshalJSON()
+	require.NoError(t, err)
+	require.JSONEq(t, `150`, string(op2Raw))
 }
 
 func TestGetStrategyAlerts_CustomLimitOffset(t *testing.T) {
@@ -207,14 +217,18 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 	mock := &mockStrategyClient{
 		createAlertFn: func(_ context.Context, in *pb.CreateAlertRequest, _ ...grpc.CallOption) (*pb.CreateAlertResponse, error) {
 			require.Equal(t, uint64(7), in.OfAccountId)
-			require.Equal(t, pb.Alert_TIMEFRAME_W1, in.Timeframe)
+			require.Equal(t, pb.Timeframe_TIMEFRAME_W1, in.Timeframe)
 			require.Equal(t, "TSLA", in.Symbol)
-			require.Equal(t, pb.Alert_INDICATOR_RSI, in.Indicator)
-			require.Equal(t, pb.Alert_OPERATOR_LESS_THAN, in.Operator)
-			require.Equal(t, pb.Alert_TRIGGER_EVERY, in.Trigger)
+			require.NotNil(t, in.Operand1)
+			require.NotNil(t, in.Operand1.GetRelativeStrengthIndex())
+			require.Equal(t, pb.RelativeStrengthIndex_RELATIVE_STRENGTH_INDEX_RSI, in.Operand1.GetRelativeStrengthIndex())
+			require.Equal(t, pb.Operator_OPERATOR_LESS_THAN, in.Operator)
+			require.Equal(t, pb.Trigger_TRIGGER_EVERY, in.Trigger)
 			require.Equal(t, int64(1800000000), in.Exp)
 			require.NotNil(t, in.Message)
 			require.Equal(t, "buy signal", *in.Message)
+			require.NotNil(t, in.Operand2)
+			require.Equal(t, 70.0, in.Operand2.GetConstValue())
 
 			msg := "buy signal"
 			return &pb.CreateAlertResponse{
@@ -222,11 +236,12 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 					Id:        100,
 					Timeframe: in.Timeframe,
 					Symbol:    in.Symbol,
-					Indicator: in.Indicator,
+					Operand1:  in.Operand1,
 					Operator:  in.Operator,
 					Trigger:   in.Trigger,
 					Exp:       in.Exp,
 					Message:   &msg,
+					Operand2:  in.Operand2,
 					CreatedAt: timestamppb.Now(),
 				},
 			}, nil
@@ -235,14 +250,19 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 	sl := newTestStrategyLogic(mock)
 
 	msg := "buy signal"
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"rsi"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`70`)))
 	body := oapi.Alert{
 		Timeframe: oapi.W1,
 		Symbol:    "TSLA",
-		Indicator: oapi.Rsi,
+		Operand1:  op1,
 		Operator:  oapi.LessThan,
 		Trigger:   oapi.Every,
 		Exp:       1800000000,
 		Message:   &msg,
+		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPost, "/strategy/alerts", body)
 	setAccountId(c, 7)
@@ -257,7 +277,6 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 	require.Equal(t, uint64(100), *resp.Id)
 	require.Equal(t, oapi.W1, resp.Timeframe)
 	require.Equal(t, "TSLA", resp.Symbol)
-	require.Equal(t, oapi.Rsi, resp.Indicator)
 	require.Equal(t, oapi.LessThan, resp.Operator)
 	require.Equal(t, oapi.Every, resp.Trigger)
 }
@@ -265,13 +284,18 @@ func TestCreateStrategyAlert_Success(t *testing.T) {
 func TestCreateStrategyAlert_NoAccountId(t *testing.T) {
 	sl := newTestStrategyLogic(&mockStrategyClient{})
 
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"close"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`100`)))
 	body := oapi.Alert{
 		Timeframe: oapi.D1,
 		Symbol:    "GOOG",
-		Indicator: oapi.Close,
+		Operand1:  op1,
 		Operator:  oapi.GreaterThan,
 		Trigger:   oapi.Once,
 		Exp:       1700000000,
+		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPost, "/strategy/alerts", body)
 	sl.CreateStrategyAlert(c)
@@ -297,19 +321,48 @@ func TestCreateStrategyAlert_GrpcError(t *testing.T) {
 	}
 	sl := newTestStrategyLogic(mock)
 
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"sma50"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`200`)))
 	body := oapi.Alert{
 		Timeframe: oapi.D1,
 		Symbol:    "MSFT",
-		Indicator: oapi.Ma50,
+		Operand1:  op1,
 		Operator:  oapi.Crossing,
 		Trigger:   oapi.Once,
 		Exp:       1700000000,
+		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPost, "/strategy/alerts", body)
 	setAccountId(c, 1)
 	sl.CreateStrategyAlert(c)
 
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestCreateStrategyAlert_IncompatibleOperands(t *testing.T) {
+	sl := newTestStrategyLogic(&mockStrategyClient{})
+
+	// price-based operand1 + niche-based operand2 → incompatible
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"close"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`"rsi"`)))
+	body := oapi.Alert{
+		Timeframe: oapi.D1,
+		Symbol:    "AAPL",
+		Operand1:  op1,
+		Operator:  oapi.GreaterThan,
+		Trigger:   oapi.Once,
+		Exp:       1700000000,
+		Operand2:  op2,
+	}
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", body)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // ---------------------------------------------------------------------------
@@ -375,22 +428,24 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 		updateAlertFn: func(_ context.Context, in *pb.UpdateAlertRequest, _ ...grpc.CallOption) (*pb.UpdateAlertResponse, error) {
 			require.Equal(t, uint64(3), in.OfAccountId)
 			require.Equal(t, uint64(50), in.AlertId)
-			require.Equal(t, pb.Alert_TIMEFRAME_M1, in.Timeframe)
+			require.Equal(t, pb.Timeframe_TIMEFRAME_M1, in.Timeframe)
 			require.Equal(t, "AMZN", in.Symbol)
-			require.Equal(t, pb.Alert_INDICATOR_BOLLINGER_BANDS, in.Indicator)
-			require.Equal(t, pb.Alert_OPERATOR_CROSSING_UP, in.Operator)
-			require.Equal(t, pb.Alert_TRIGGER_ONCE, in.Trigger)
+			require.NotNil(t, in.Operand1)
+			require.Equal(t, pb.BollingerBand_BOLLINGER_BAND_LOWER, in.Operand1.GetBollingerBand())
+			require.Equal(t, pb.Operator_OPERATOR_CROSSING_UP, in.Operator)
+			require.Equal(t, pb.Trigger_TRIGGER_ONCE, in.Trigger)
 
 			return &pb.UpdateAlertResponse{
 				Alert: &pb.Alert{
 					Id:        50,
 					Timeframe: in.Timeframe,
 					Symbol:    in.Symbol,
-					Indicator: in.Indicator,
+					Operand1:  in.Operand1,
 					Operator:  in.Operator,
 					Trigger:   in.Trigger,
 					Exp:       in.Exp,
 					Message:   in.Message,
+					Operand2:  in.Operand2,
 					UpdatedAt: timestamppb.Now(),
 				},
 			}, nil
@@ -399,14 +454,19 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 	sl := newTestStrategyLogic(mock)
 
 	msg := "updated alert"
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"lower"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`"close"`)))
 	body := oapi.Alert{
 		Timeframe: oapi.M1,
 		Symbol:    "AMZN",
-		Indicator: oapi.BollingerBands,
+		Operand1:  op1,
 		Operator:  oapi.CrossingUp,
 		Trigger:   oapi.Once,
 		Exp:       1900000000,
 		Message:   &msg,
+		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/50", body)
 	setAccountId(c, 3)
@@ -421,7 +481,6 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 	require.Equal(t, uint64(50), *resp.Id)
 	require.Equal(t, oapi.M1, resp.Timeframe)
 	require.Equal(t, "AMZN", resp.Symbol)
-	require.Equal(t, oapi.BollingerBands, resp.Indicator)
 	require.Equal(t, oapi.CrossingUp, resp.Operator)
 	require.NotNil(t, resp.UpdatedAt)
 }
@@ -429,13 +488,18 @@ func TestUpdateStrategyAlert_Success(t *testing.T) {
 func TestUpdateStrategyAlert_NoAccountId(t *testing.T) {
 	sl := newTestStrategyLogic(&mockStrategyClient{})
 
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"close"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`50`)))
 	body := oapi.Alert{
 		Timeframe: oapi.D1,
 		Symbol:    "X",
-		Indicator: oapi.Close,
+		Operand1:  op1,
 		Operator:  oapi.GreaterThan,
 		Trigger:   oapi.Once,
 		Exp:       1700000000,
+		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/1", body)
 	sl.UpdateStrategyAlert(c, 1)
@@ -461,19 +525,48 @@ func TestUpdateStrategyAlert_GrpcError(t *testing.T) {
 	}
 	sl := newTestStrategyLogic(mock)
 
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"ma200"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`"close"`)))
 	body := oapi.Alert{
 		Timeframe: oapi.D1,
 		Symbol:    "FB",
-		Indicator: oapi.Ma200,
+		Operand1:  op1,
 		Operator:  oapi.CrossingDown,
 		Trigger:   oapi.Every,
 		Exp:       1700000000,
+		Operand2:  op2,
 	}
 	c, w := newGinContext(http.MethodPut, "/strategy/alerts/1", body)
 	setAccountId(c, 1)
 	sl.UpdateStrategyAlert(c, 1)
 
 	require.Equal(t, http.StatusInternalServerError, w.Code)
+}
+
+func TestUpdateStrategyAlert_IncompatibleOperands(t *testing.T) {
+	sl := newTestStrategyLogic(&mockStrategyClient{})
+
+	// niche-based operand1 + price-based operand2 → incompatible
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"rsi"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`"sma50"`)))
+	body := oapi.Alert{
+		Timeframe: oapi.D1,
+		Symbol:    "AAPL",
+		Operand1:  op1,
+		Operator:  oapi.GreaterThan,
+		Trigger:   oapi.Once,
+		Exp:       1700000000,
+		Operand2:  op2,
+	}
+	c, w := newGinContext(http.MethodPut, "/strategy/alerts/1", body)
+	setAccountId(c, 1)
+	sl.UpdateStrategyAlert(c, 1)
+
+	require.Equal(t, http.StatusBadRequest, w.Code)
 }
 
 // ---------------------------------------------------------------------------
