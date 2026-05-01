@@ -1,10 +1,14 @@
 package logic_http
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
+	"github.com/Fiagram/standalone/internal/configs"
+	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	dao_strategy "github.com/Fiagram/standalone/internal/dao/strategy"
 	pb "github.com/Fiagram/standalone/internal/generated/grpc/strategy"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
@@ -25,17 +29,29 @@ type StrategyLogic interface {
 var _ StrategyLogic = (oapi.ServerInterface)(nil)
 
 type strategyLogic struct {
-	strategyClient dao_strategy.Client
-	logger         *zap.Logger
+	strategyClient       dao_strategy.Client
+	accountRoleAccessor  dao_database.AccountRoleAccessor
+	subscriptionAccessor dao_database.AccountSubscriptionAccessor
+	webhookAccessor      dao_database.ChatbotWebhookAccessor
+	strategyConfig       configs.StrategyFeature
+	logger               *zap.Logger
 }
 
 func NewStrategyLogic(
 	strategyClient dao_strategy.Client,
+	accountRoleAccessor dao_database.AccountRoleAccessor,
+	subscriptionAccessor dao_database.AccountSubscriptionAccessor,
+	webhookAccessor dao_database.ChatbotWebhookAccessor,
+	strategyConfig configs.StrategyFeature,
 	logger *zap.Logger,
 ) StrategyLogic {
 	return &strategyLogic{
-		strategyClient: strategyClient,
-		logger:         logger,
+		strategyClient:       strategyClient,
+		accountRoleAccessor:  accountRoleAccessor,
+		subscriptionAccessor: subscriptionAccessor,
+		webhookAccessor:      webhookAccessor,
+		strategyConfig:       strategyConfig,
+		logger:               logger,
 	}
 }
 
@@ -363,6 +379,92 @@ func (s *strategyLogic) CreateStrategyAlert(c *gin.Context) {
 
 	accountId, ok := getAccountIdFromContext(c, logger)
 	if !ok {
+		return
+	}
+
+	// 1. Role check — only 'member' role can create alerts.
+	role, err := s.accountRoleAccessor.GetRoleByAccountId(c, accountId)
+	if err != nil {
+		logger.Error("failed to get account role", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: "failed to verify account role",
+		})
+		return
+	}
+	if role.Name != "member" {
+		c.JSON(http.StatusForbidden, oapi.Forbidden{
+			Code:    "Forbidden",
+			Message: "only member accounts can create strategy alerts",
+		})
+		return
+	}
+
+	// 2. Subscription quota check — look up plan, then count existing alerts.
+	plan := "free"
+	sub, err := s.subscriptionAccessor.GetSubscriptionByAccountId(c, accountId)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		logger.Error("failed to get subscription", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: "failed to verify subscription",
+		})
+		return
+	}
+	if err == nil && sub.Status == "active" {
+		plan = sub.Plan
+	}
+
+	var quotaUnlimited bool
+	var quota int
+	switch plan {
+	case "max":
+		quotaUnlimited = s.strategyConfig.AlertQuota.Max == 0
+		quota = s.strategyConfig.AlertQuota.Max
+	case "pro":
+		quota = s.strategyConfig.AlertQuota.Pro
+	default: // "free" or unknown
+		quota = s.strategyConfig.AlertQuota.Free
+	}
+
+	if !quotaUnlimited {
+		countResp, err := s.strategyClient.GetAlerts(c, &pb.GetAlertsRequest{
+			OfAccountId: accountId,
+			Limit:       uint32(quota) + 1,
+			Offset:      0,
+		})
+		if err != nil {
+			logger.Error("failed to count existing alerts", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+				Code:    "InternalServerError",
+				Message: "failed to verify alert quota",
+			})
+			return
+		}
+		if len(countResp.Alerts) >= quota {
+			c.JSON(http.StatusPaymentRequired, oapi.PaymentRequired{
+				Code:    "PaymentRequired",
+				Message: fmt.Sprintf("alert quota reached for %s plan (%d/%d); upgrade your plan to create more alerts", plan, len(countResp.Alerts), quota),
+			})
+			return
+		}
+	}
+
+	// 3. Webhook presence check — at least one webhook must exist.
+	webhooks, err := s.webhookAccessor.GetWebhooksByAccountId(c, accountId, 1, 0)
+	if err != nil {
+		logger.Error("failed to check webhooks", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, oapi.InternalServerError{
+			Code:    "InternalServerError",
+			Message: "failed to verify webhooks",
+		})
+		return
+	}
+	if len(webhooks) == 0 {
+		c.JSON(http.StatusUnprocessableEntity, oapi.UnprocessableEntity{
+			Code:    "UnprocessableEntity",
+			Message: "no webhook found; please create at least one webhook before creating a strategy alert",
+		})
 		return
 	}
 

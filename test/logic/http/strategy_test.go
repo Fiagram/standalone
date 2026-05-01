@@ -9,6 +9,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/Fiagram/standalone/internal/configs"
+	dao_database "github.com/Fiagram/standalone/internal/dao/database"
 	pb "github.com/Fiagram/standalone/internal/generated/grpc/strategy"
 	oapi "github.com/Fiagram/standalone/internal/generated/openapi"
 	logic_http "github.com/Fiagram/standalone/internal/logic/http"
@@ -74,8 +76,68 @@ func (m *mockStrategyClient) Close() error {
 // Helpers
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Mock: dao_database.AccountSubscriptionAccessor
+// ---------------------------------------------------------------------------
+
+type mockAccountSubscriptionAccessor struct {
+	getSubscriptionByAccountIdFn func(ctx context.Context, accountId uint64) (dao_database.AccountSubscription, error)
+}
+
+func (m *mockAccountSubscriptionAccessor) GetSubscriptionByAccountId(ctx context.Context, accountId uint64) (dao_database.AccountSubscription, error) {
+	if m.getSubscriptionByAccountIdFn != nil {
+		return m.getSubscriptionByAccountIdFn(ctx, accountId)
+	}
+	return dao_database.AccountSubscription{Plan: "free", Status: "active"}, nil
+}
+func (m *mockAccountSubscriptionAccessor) CreateSubscription(_ context.Context, _ dao_database.AccountSubscription) error {
+	return nil
+}
+func (m *mockAccountSubscriptionAccessor) WithExecutor(_ dao_database.Executor) dao_database.AccountSubscriptionAccessor {
+	return m
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+func defaultStrategyConfig() configs.StrategyFeature {
+	return configs.StrategyFeature{AlertQuota: configs.AlertQuota{
+		Free: 1,
+		Pro:  10,
+		Max:  0, // 0 = unlimited
+	}}
+}
+
+// newTestStrategyLogic is the default helper used by existing tests.
+// It wires in defaults: member role, free subscription, one webhook present.
 func newTestStrategyLogic(client *mockStrategyClient) logic_http.StrategyLogic {
-	return logic_http.NewStrategyLogic(client, zap.NewNop())
+	return newTestStrategyLogicWith(
+		client,
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{},
+		&mockWebhookAccessor{
+			getWebhooksByAccountFn: func(_ context.Context, _ uint64, _, _ int) ([]dao_database.ChatbotWebhook, error) {
+				return []dao_database.ChatbotWebhook{{Id: 1, Name: "default", Url: "http://example.com"}}, nil
+			},
+		},
+		defaultStrategyConfig(),
+	)
+}
+
+// newTestStrategyLogicWith allows full control over all mocked dependencies.
+func newTestStrategyLogicWith(
+	client *mockStrategyClient,
+	roleAccessor dao_database.AccountRoleAccessor,
+	subAccessor dao_database.AccountSubscriptionAccessor,
+	webhookAccessor dao_database.ChatbotWebhookAccessor,
+	cfg configs.StrategyFeature,
+) logic_http.StrategyLogic {
+	return logic_http.NewStrategyLogic(client, roleAccessor, subAccessor, webhookAccessor, cfg, zap.NewNop())
 }
 
 func sampleProtoAlert() *pb.Alert {
@@ -363,6 +425,268 @@ func TestCreateStrategyAlert_IncompatibleOperands(t *testing.T) {
 	sl.CreateStrategyAlert(c)
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+// ---------------------------------------------------------------------------
+// Tests: CreateStrategyAlert — pre-checks (role, quota, webhook)
+// ---------------------------------------------------------------------------
+
+func TestCreateStrategyAlert_RoleNotMember(t *testing.T) {
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 1, Name: "admin"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{},
+		&mockWebhookAccessor{},
+		defaultStrategyConfig(),
+	)
+
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", nil)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusForbidden, w.Code)
+}
+
+func TestCreateStrategyAlert_InactiveSubscriptionFallsBackToFree(t *testing.T) {
+	// Pro plan is inactive — should enforce the free quota (1 alert), not the pro quota (10).
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{
+			getAlertsFn: func(_ context.Context, in *pb.GetAlertsRequest, _ ...grpc.CallOption) (*pb.GetAlertsResponse, error) {
+				require.Equal(t, uint32(2), in.Limit) // free quota (1) + 1
+				return &pb.GetAlertsResponse{Alerts: []*pb.Alert{sampleProtoAlert()}}, nil
+			},
+		},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{
+			getSubscriptionByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountSubscription, error) {
+				return dao_database.AccountSubscription{Plan: "pro", Status: "inactive"}, nil
+			},
+		},
+		&mockWebhookAccessor{},
+		defaultStrategyConfig(),
+	)
+
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", nil)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusPaymentRequired, w.Code)
+	var resp oapi.ErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, "PaymentRequired", resp.Code)
+}
+
+func TestCreateStrategyAlert_FreePlanAtQuota(t *testing.T) {
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{
+			getAlertsFn: func(_ context.Context, in *pb.GetAlertsRequest, _ ...grpc.CallOption) (*pb.GetAlertsResponse, error) {
+				require.Equal(t, uint32(2), in.Limit) // free quota (1) + 1
+				return &pb.GetAlertsResponse{Alerts: []*pb.Alert{sampleProtoAlert()}}, nil
+			},
+		},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{
+			getSubscriptionByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountSubscription, error) {
+				return dao_database.AccountSubscription{Plan: "free", Status: "active"}, nil
+			},
+		},
+		&mockWebhookAccessor{},
+		defaultStrategyConfig(),
+	)
+
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", nil)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusPaymentRequired, w.Code)
+	var resp oapi.ErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, "PaymentRequired", resp.Code)
+}
+
+func TestCreateStrategyAlert_ProPlanAtQuota(t *testing.T) {
+	alerts := make([]*pb.Alert, 10)
+	for i := range alerts {
+		alerts[i] = sampleProtoAlert()
+	}
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{
+			getAlertsFn: func(_ context.Context, in *pb.GetAlertsRequest, _ ...grpc.CallOption) (*pb.GetAlertsResponse, error) {
+				require.Equal(t, uint32(11), in.Limit) // pro quota (10) + 1
+				return &pb.GetAlertsResponse{Alerts: alerts}, nil
+			},
+		},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{
+			getSubscriptionByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountSubscription, error) {
+				return dao_database.AccountSubscription{Plan: "pro", Status: "active"}, nil
+			},
+		},
+		&mockWebhookAccessor{},
+		defaultStrategyConfig(),
+	)
+
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", nil)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusPaymentRequired, w.Code)
+	var resp oapi.ErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, "PaymentRequired", resp.Code)
+}
+
+func TestCreateStrategyAlert_MaxPlanSkipsQuotaCheck(t *testing.T) {
+	getAlertsCalled := false
+	alertMsg := "test"
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{
+			getAlertsFn: func(_ context.Context, _ *pb.GetAlertsRequest, _ ...grpc.CallOption) (*pb.GetAlertsResponse, error) {
+				getAlertsCalled = true
+				return &pb.GetAlertsResponse{}, nil
+			},
+			createAlertFn: func(_ context.Context, in *pb.CreateAlertRequest, _ ...grpc.CallOption) (*pb.CreateAlertResponse, error) {
+				return &pb.CreateAlertResponse{
+					Alert: &pb.Alert{
+						Id:        "1",
+						Timeframe: in.Timeframe,
+						Symbol:    in.Symbol,
+						Operand1:  in.Operand1,
+						Operator:  in.Operator,
+						Trigger:   in.Trigger,
+						Exp:       in.Exp,
+						Message:   &alertMsg,
+						Operand2:  in.Operand2,
+						CreatedAt: timestamppb.Now(),
+					},
+				}, nil
+			},
+		},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{
+			getSubscriptionByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountSubscription, error) {
+				return dao_database.AccountSubscription{Plan: "max", Status: "active"}, nil
+			},
+		},
+		&mockWebhookAccessor{
+			getWebhooksByAccountFn: func(_ context.Context, _ uint64, _, _ int) ([]dao_database.ChatbotWebhook, error) {
+				return []dao_database.ChatbotWebhook{{Id: 1, Name: "hook", Url: "http://example.com"}}, nil
+			},
+		},
+		defaultStrategyConfig(),
+	)
+
+	var op1 oapi.Alert_Operand1
+	require.NoError(t, op1.UnmarshalJSON([]byte(`"close"`)))
+	var op2 oapi.Alert_Operand2
+	require.NoError(t, op2.UnmarshalJSON([]byte(`150`)))
+	body := oapi.Alert{
+		Timeframe: oapi.D1,
+		Symbol:    "GMD",
+		Operand1:  op1,
+		Operator:  oapi.GreaterThan,
+		Trigger:   oapi.Once,
+		Exp:       1700000000,
+		Operand2:  op2,
+	}
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", body)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusCreated, w.Code)
+	require.False(t, getAlertsCalled, "GetAlerts should not be called for the max plan")
+}
+
+func TestCreateStrategyAlert_MaxPlanWithFiniteQuota(t *testing.T) {
+	maxQuota := 2
+	cfg := configs.StrategyFeature{AlertQuota: configs.AlertQuota{
+		Free: 1,
+		Pro:  10,
+		Max:  maxQuota,
+	}}
+
+	// Simulate max plan already at the quota limit.
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{
+			getAlertsFn: func(_ context.Context, _ *pb.GetAlertsRequest, _ ...grpc.CallOption) (*pb.GetAlertsResponse, error) {
+				return &pb.GetAlertsResponse{
+					Alerts: []*pb.Alert{{Id: "1"}, {Id: "2"}}, // maxQuota alerts already exist
+				}, nil
+			},
+		},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{
+			getSubscriptionByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountSubscription, error) {
+				return dao_database.AccountSubscription{Plan: "max", Status: "active"}, nil
+			},
+		},
+		&mockWebhookAccessor{
+			getWebhooksByAccountFn: func(_ context.Context, _ uint64, _, _ int) ([]dao_database.ChatbotWebhook, error) {
+				return []dao_database.ChatbotWebhook{{Id: 1, Name: "hook", Url: "http://example.com"}}, nil
+			},
+		},
+		cfg,
+	)
+
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", nil)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusPaymentRequired, w.Code)
+	var resp oapi.ErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, "PaymentRequired", resp.Code)
+}
+
+func TestCreateStrategyAlert_NoWebhook(t *testing.T) {
+	sl := newTestStrategyLogicWith(
+		&mockStrategyClient{},
+		&mockAccountRoleAccessor{
+			getRoleByAccountIdFn: func(_ context.Context, _ uint64) (dao_database.AccountRole, error) {
+				return dao_database.AccountRole{Id: 2, Name: "member"}, nil
+			},
+		},
+		&mockAccountSubscriptionAccessor{},
+		&mockWebhookAccessor{
+			getWebhooksByAccountFn: func(_ context.Context, _ uint64, _, _ int) ([]dao_database.ChatbotWebhook, error) {
+				return []dao_database.ChatbotWebhook{}, nil
+			},
+		},
+		defaultStrategyConfig(),
+	)
+
+	c, w := newGinContext(http.MethodPost, "/strategy/alerts", nil)
+	setAccountId(c, 1)
+	sl.CreateStrategyAlert(c)
+
+	require.Equal(t, http.StatusUnprocessableEntity, w.Code)
+	var resp oapi.ErrorResponse
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
+	require.Equal(t, "UnprocessableEntity", resp.Code)
 }
 
 // ---------------------------------------------------------------------------

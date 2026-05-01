@@ -18,5 +18,6 @@ var Module = fx.Module(
 		GetConfigMessageQueue,
 		GetConfigGrpcClient,
 		GetConfigGrpcClientStrategy,
+		GetConfigStrategy,
 	),
 )

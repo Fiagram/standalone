@@ -10,6 +10,7 @@ import (
 
 	"github.com/Fiagram/standalone/internal/configs"
 	"github.com/stretchr/testify/require"
+	yaml_pkg "gopkg.in/yaml.v3"
 )
 
 var config configs.Config
@@ -78,4 +79,45 @@ func TestDatabaseClient(t *testing.T) {
 	require.Equal(t, "root", config.DatabaseClient.Username)
 	require.Equal(t, "root", config.DatabaseClient.Password)
 	require.Equal(t, "fiagram", config.DatabaseClient.Database)
+}
+
+func TestStrategyAlertQuota_DefaultConfig(t *testing.T) {
+	// Verifies the embedded local.yaml values are loaded correctly.
+	q := config.Strategy.AlertQuota
+	require.Equal(t, 1, q.Free)
+	require.Equal(t, 10, q.Pro)
+	require.Equal(t, 0, q.Max) // "*" in local.yaml → 0 (unlimited)
+}
+
+func TestAlertQuota_UnmarshalYAML_Star(t *testing.T) {
+	yaml := `free: 1
+pro: 10
+max: "*"`
+	var q configs.AlertQuota
+	require.NoError(t, unmarshalAlertQuota(yaml, &q))
+	require.Equal(t, 1, q.Free)
+	require.Equal(t, 10, q.Pro)
+	require.Equal(t, 0, q.Max, "\"*\" should be treated as 0 (unlimited)")
+}
+
+func TestAlertQuota_UnmarshalYAML_IntegerMax(t *testing.T) {
+	yaml := `free: 1
+pro: 10
+max: 5`
+	var q configs.AlertQuota
+	require.NoError(t, unmarshalAlertQuota(yaml, &q))
+	require.Equal(t, 5, q.Max)
+}
+
+func TestAlertQuota_UnmarshalYAML_OmittedMax(t *testing.T) {
+	yaml := `free: 1
+pro: 10`
+	var q configs.AlertQuota
+	require.NoError(t, unmarshalAlertQuota(yaml, &q))
+	require.Equal(t, 0, q.Max, "omitted max should default to 0 (unlimited)")
+}
+
+// unmarshalAlertQuota is a helper that decodes a YAML string into an AlertQuota.
+func unmarshalAlertQuota(src string, q *configs.AlertQuota) error {
+	return yaml_pkg.Unmarshal([]byte(src), q)
 }

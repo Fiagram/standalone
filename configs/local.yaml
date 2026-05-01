@@ -65,3 +65,9 @@ grpc_client:
   strategy:
     address: 127.0.0.1
     port: 13000
+
+strategy:
+  alert_quota:
+    free: 1
+    pro: 10
+    max: "*"

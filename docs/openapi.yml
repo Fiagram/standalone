@@ -349,7 +349,9 @@ paths:
                 $ref: "#/components/schemas/Alert"
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "402": { $ref: "#/components/responses/PaymentRequired" }
         "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
 
   /strategy/alerts/{alertId}:
     get:
@@ -495,6 +497,20 @@ components:
 
     TooManyRequests:
       description: Sent too many request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    PaymentRequired:
+      description: Payment required or quota exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    UnprocessableEntity:
+      description: Request is well-formed but cannot be processed due to a business rule
       content:
         application/json:
           schema:

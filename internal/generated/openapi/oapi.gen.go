@@ -435,11 +435,17 @@ type InternalServerError = ErrorResponse
 // NotFound defines model for NotFound.
 type NotFound = ErrorResponse
 
+// PaymentRequired defines model for PaymentRequired.
+type PaymentRequired = ErrorResponse
+
 // TooManyRequests defines model for TooManyRequests.
 type TooManyRequests = ErrorResponse
 
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = ErrorResponse
+
+// UnprocessableEntity defines model for UnprocessableEntity.
+type UnprocessableEntity = ErrorResponse
 
 // GetProfileWebhooksParams defines parameters for GetProfileWebhooks.
 type GetProfileWebhooksParams struct {

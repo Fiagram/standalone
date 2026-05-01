@@ -31,6 +31,7 @@ type account struct {
 	db                      *sql.DB
 	accountAccessor         dao_database.AccountAccessor
 	accountPasswordAccessor dao_database.AccountPasswordAccessor
+	subscriptionAccessor    dao_database.AccountSubscriptionAccessor
 	hashLogic               Hash
 	logger                  *zap.Logger
 }
@@ -39,6 +40,7 @@ func NewAccount(
 	db *sql.DB,
 	accountAccessor dao_database.AccountAccessor,
 	accountPasswordAccessor dao_database.AccountPasswordAccessor,
+	subscriptionAccessor dao_database.AccountSubscriptionAccessor,
 	hashLogic Hash,
 	logger *zap.Logger,
 ) Account {
@@ -46,6 +48,7 @@ func NewAccount(
 		db:                      db,
 		accountAccessor:         accountAccessor,
 		accountPasswordAccessor: accountPasswordAccessor,
+		subscriptionAccessor:    subscriptionAccessor,
 		hashLogic:               hashLogic,
 		logger:                  logger,
 	}
@@ -95,6 +98,17 @@ func (a account) CreateAccount(
 		})
 	if err != nil {
 		return emptyOutput, fmt.Errorf("failed to create new password: %w", err)
+	}
+
+	err = a.subscriptionAccessor.
+		WithExecutor(tx).
+		CreateSubscription(ctx, dao_database.AccountSubscription{
+			OfAccountId: id,
+			Plan:        "free",
+			Status:      "active",
+		})
+	if err != nil {
+		return emptyOutput, fmt.Errorf("failed to create subscription: %w", err)
 	}
 
 	if err = tx.Commit(); err != nil {
