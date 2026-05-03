@@ -9,16 +9,19 @@ import (
 )
 
 type AccountSubscription struct {
-	OfAccountId uint64    `json:"of_account_id"`
-	Plan        string    `json:"plan"`
-	Status      string    `json:"status"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	OfAccountId   uint64     `json:"of_account_id"`
+	Plan          string     `json:"plan"`
+	BillingPeriod string     `json:"billing_period"`
+	Status        string     `json:"status"`
+	ExpiresAt     *time.Time `json:"expires_at"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
 }
 
 type AccountSubscriptionAccessor interface {
 	GetSubscriptionByAccountId(ctx context.Context, accountId uint64) (AccountSubscription, error)
 	CreateSubscription(ctx context.Context, sub AccountSubscription) error
+	UpdateSubscription(ctx context.Context, sub AccountSubscription) error
 	WithExecutor(exec Executor) AccountSubscriptionAccessor
 }
 
@@ -46,7 +49,7 @@ func (a accountSubscriptionAccessor) GetSubscriptionByAccountId(
 	}
 
 	logger := logger.LoggerWithContext(ctx, a.logger).With(zap.Any("account_id", accountId))
-	const query = `SELECT of_account_id, plan, status, created_at, updated_at
+	const query = `SELECT of_account_id, plan, billing_period, status, expires_at, created_at, updated_at
 		FROM account_subscriptions
 		WHERE of_account_id = ?`
 
@@ -54,7 +57,9 @@ func (a accountSubscriptionAccessor) GetSubscriptionByAccountId(
 	err := a.exec.QueryRowContext(ctx, query, accountId).Scan(
 		&sub.OfAccountId,
 		&sub.Plan,
+		&sub.BillingPeriod,
 		&sub.Status,
+		&sub.ExpiresAt,
 		&sub.CreatedAt,
 		&sub.UpdatedAt,
 	)
@@ -101,4 +106,26 @@ func (a accountSubscriptionAccessor) WithExecutor(
 		exec:   exec,
 		logger: a.logger,
 	}
+}
+
+func (a accountSubscriptionAccessor) UpdateSubscription(
+	ctx context.Context,
+	sub AccountSubscription,
+) error {
+	if sub.OfAccountId == 0 {
+		return ErrLackOfInfor
+	}
+
+	logger := logger.LoggerWithContext(ctx, a.logger).With(zap.Uint64("account_id", sub.OfAccountId))
+	const query = `UPDATE account_subscriptions
+		SET plan = ?, billing_period = ?, status = ?, expires_at = ?
+		WHERE of_account_id = ?`
+	_, err := a.exec.ExecContext(ctx, query,
+		sub.Plan, sub.BillingPeriod, sub.Status, sub.ExpiresAt, sub.OfAccountId,
+	)
+	if err != nil {
+		logger.Error("failed to update subscription", zap.Error(err))
+		return err
+	}
+	return nil
 }

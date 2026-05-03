@@ -71,3 +71,10 @@ strategy:
     free: 1
     pro: 10
     max: "*"
+
+sepay:
+  api_key: "your_sepay_api_key"
+  account_number: "your_bank_account_number"
+  bank_code: "MB"
+  webhook_secret: "your_webhook_secret"
+  payment_expiry: 15m

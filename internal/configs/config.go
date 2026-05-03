@@ -19,6 +19,7 @@ type Config struct {
 	DatabaseClient DatabaseClient  `yaml:"database_client"`
 	GrpcClient     GrpcClient      `yaml:"grpc_client"`
 	Strategy       StrategyFeature `yaml:"strategy"`
+	SePay          SePayConfig     `yaml:"sepay"`
 }
 
 // Creates a new config instance by reading from a given YAML file.

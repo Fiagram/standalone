@@ -23,10 +23,11 @@ type HttpServer interface {
 type httpServer struct {
 	httpConfig configs.Http
 
-	authLogic     auth_logic.AuthLogic
-	usersLogic    auth_logic.ProfileLogic
-	strategyLogic auth_logic.StrategyLogic
-	tokenLogic    token_logic.Token
+	authLogic         auth_logic.AuthLogic
+	usersLogic        auth_logic.ProfileLogic
+	strategyLogic     auth_logic.StrategyLogic
+	subscriptionLogic auth_logic.SubscriptionLogic
+	tokenLogic        token_logic.Token
 
 	logger *zap.Logger
 }
@@ -36,16 +37,18 @@ func NewHttpServer(
 	authLogic auth_logic.AuthLogic,
 	usersLogic auth_logic.ProfileLogic,
 	strategyLogic auth_logic.StrategyLogic,
+	subscriptionLogic auth_logic.SubscriptionLogic,
 	tokenLogic token_logic.Token,
 	logger *zap.Logger,
 ) HttpServer {
 	return &httpServer{
-		httpConfig:    httpConfig,
-		authLogic:     authLogic,
-		usersLogic:    usersLogic,
-		strategyLogic: strategyLogic,
-		tokenLogic:    tokenLogic,
-		logger:        logger,
+		httpConfig:        httpConfig,
+		authLogic:         authLogic,
+		usersLogic:        usersLogic,
+		strategyLogic:     strategyLogic,
+		subscriptionLogic: subscriptionLogic,
+		tokenLogic:        tokenLogic,
+		logger:            logger,
 	}
 }
 
@@ -88,6 +91,13 @@ func (s *httpServer) Start(ctx context.Context) error {
 	authorized.PUT("/profile/webhooks/:webhookId", s.wrapWebhookId(s.usersLogic.UpdateProfileWebhook))
 	authorized.DELETE("/profile/webhooks/:webhookId", s.wrapWebhookId(s.usersLogic.DeleteProfileWebhook))
 
+	authorized.GET("/profile/subscription", s.subscriptionLogic.GetProfileSubscription)
+	authorized.GET("/profile/subscription/plans", s.subscriptionLogic.GetProfileSubscriptionPlans)
+	authorized.POST("/profile/subscription/purchase", s.subscriptionLogic.PurchaseSubscription)
+	authorized.GET("/profile/subscription/orders/:orderId", s.wrapOrderId(s.subscriptionLogic.GetSubscriptionOrder))
+
+	public.POST("/webhooks/payment/sepay", s.subscriptionLogic.SePayWebhook)
+
 	authorized.GET("/strategy/alerts", func(c *gin.Context) {
 		var params oapi.GetStrategyAlertsParams
 		_ = runtime.BindQueryParameterWithOptions("form", true, false, "limit", c.Request.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
@@ -118,6 +128,19 @@ func (s *httpServer) wrapWebhookId(handler func(*gin.Context, oapi.WebhookId)) g
 			return
 		}
 		handler(c, webhookId)
+	}
+}
+
+// wrapOrderId parses the orderId path parameter and delegates to the typed handler.
+func (s *httpServer) wrapOrderId(handler func(*gin.Context, oapi.OrderId)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var orderId oapi.OrderId
+		err := runtime.BindStyledParameterWithOptions("simple", "orderId", c.Param("orderId"), &orderId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"code": "BadRequest", "message": fmt.Sprintf("invalid orderId: %s", err)})
+			return
+		}
+		handler(c, orderId)
 	}
 }
 

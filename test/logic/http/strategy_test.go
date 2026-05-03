@@ -93,6 +93,9 @@ func (m *mockAccountSubscriptionAccessor) GetSubscriptionByAccountId(ctx context
 func (m *mockAccountSubscriptionAccessor) CreateSubscription(_ context.Context, _ dao_database.AccountSubscription) error {
 	return nil
 }
+func (m *mockAccountSubscriptionAccessor) UpdateSubscription(_ context.Context, _ dao_database.AccountSubscription) error {
+	return nil
+}
 func (m *mockAccountSubscriptionAccessor) WithExecutor(_ dao_database.Executor) dao_database.AccountSubscriptionAccessor {
 	return m
 }

@@ -17,6 +17,8 @@ tags:
     description: Profile endpoints
   - name: Strategy
     description: Trading strategy endpoints
+  - name: Subscription
+    description: Subscription plan management and payment endpoints
 
 security:
   - bearerAuth: []
@@ -414,6 +416,123 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  # -------------------------------- Subscription
+  /profile/subscription:
+    get:
+      tags: [ Subscription ]
+      summary: Get current subscription status
+      operationId: getProfileSubscription
+      description: |
+        Returns the account's current active subscription plan and expiry date.
+        Applies lazy downgrade — if the subscription has expired it is reset to free before returning.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current subscription status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionStatus"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /profile/subscription/plans:
+    get:
+      tags: [ Subscription ]
+      summary: List available subscription plans and prices
+      operationId: getProfileSubscriptionPlans
+      description: Returns all purchasable plans (pro and max) with pricing for each
+        billing period.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of available plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SubscriptionPlanInfo"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /profile/subscription/purchase:
+    post:
+      tags: [ Subscription ]
+      summary: Initiate a subscription plan purchase
+      operationId: purchaseSubscription
+      description: |
+        Creates a pending payment order and returns a SePay bank-transfer QR code.
+        The subscription is upgraded automatically once SePay confirms payment.
+        Only upgrades are allowed — downgrading to a lower plan is rejected with 422.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurchaseSubscriptionRequest"
+      responses:
+        "201":
+          description: Payment order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurchaseSubscriptionResponse"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "422": { $ref: "#/components/responses/UnprocessableEntity" }
+
+  /profile/subscription/orders/{orderId}:
+    get:
+      tags: [ Subscription ]
+      summary: Get subscription order status
+      operationId: getSubscriptionOrder
+      description: |
+        Returns the current status of a subscription payment order.
+        The client can poll this endpoint to detect when payment is confirmed.
+        Pending orders that have passed `payment_expires_at` are automatically marked expired.
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/OrderId"
+      responses:
+        "200":
+          description: Order status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionOrderStatus"
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /webhooks/payment/sepay:
+    post:
+      tags: [ Subscription ]
+      summary: SePay payment confirmation webhook
+      operationId: sePayWebhook
+      description: |
+        Called by SePay when an incoming bank transfer is detected.
+        Verifies the request via `Authorization: Apikey {webhook_secret}` header,
+        matches the transfer memo to a pending order, and upgrades the subscription.
+        Returns 200 for both new confirmations and already-processed idempotent calls.
+      security: [] # authenticated via Apikey header, not JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SePayWebhookPayload"
+      responses:
+        "200":
+          description: Webhook processed successfully
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -465,6 +584,16 @@ components:
       schema:
         type: string
         minLength: 1
+
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      description: The unique ID of the subscription order
+      schema:
+        type: integer
+        format: uint64
+        minimum: 1
 
   responses:
     # Ref: https://restfulapi.net/http-status-codes/
@@ -861,3 +990,222 @@ components:
           format: date-time
           readOnly: true
           description: When the alert was last updated, server side generated
+
+    # -------------------------------- Subscription
+    SubscriptionPlan:
+      type: string
+      enum:
+        - free
+        - pro
+        - max
+      example: pro
+
+    SubscriptionBillingPeriod:
+      type: string
+      enum:
+        - free
+        - monthly
+        - yearly
+      example: monthly
+
+    SubscriptionStatus:
+      type: object
+      additionalProperties: false
+      required: [ plan, billingPeriod, status ]
+      properties:
+        plan:
+          $ref: "#/components/schemas/SubscriptionPlan"
+        billingPeriod:
+          $ref: "#/components/schemas/SubscriptionBillingPeriod"
+        status:
+          type: string
+          enum:
+            - active
+            - inactive
+          example: active
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: When the current paid plan expires. Null for free plan.
+          example: "2026-06-01T00:00:00Z"
+
+    SubscriptionPlanInfo:
+      type: object
+      additionalProperties: false
+      required: [ plan, billingPeriod, price, currency ]
+      properties:
+        plan:
+          $ref: "#/components/schemas/SubscriptionPlan"
+        billingPeriod:
+          type: string
+          enum:
+            - monthly
+            - yearly
+          example: monthly
+        price:
+          type: number
+          format: double
+          minimum: 0
+          example: 99000.00
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          example: VND
+
+    PurchaseSubscriptionRequest:
+      type: object
+      additionalProperties: false
+      required: [ plan, billingPeriod ]
+      properties:
+        plan:
+          type: string
+          enum:
+            - pro
+            - max
+          example: pro
+        billingPeriod:
+          type: string
+          enum:
+            - monthly
+            - yearly
+          example: monthly
+
+    PurchaseSubscriptionResponse:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          orderId,
+          referenceCode,
+          amount,
+          currency,
+          bankCode,
+          accountNumber,
+          qrCodeUrl,
+          expiresAt,
+        ]
+      properties:
+        orderId:
+          type: integer
+          format: uint64
+          readOnly: true
+          example: 42
+        referenceCode:
+          type: string
+          description: Payment memo to include in the bank transfer
+          example: FIA1234567890123456789
+        amount:
+          type: number
+          format: double
+          example: 99000.00
+        currency:
+          type: string
+          example: VND
+        bankCode:
+          type: string
+          example: MB
+        accountNumber:
+          type: string
+          example: "123456789"
+        qrCodeUrl:
+          type: string
+          description: SePay QR code image URL; scan to initiate bank transfer
+          example: "https://qr.sepay.vn/img?acc=123456789&bank=MB&amount=99000&des=FIA123\
+            4567890&template=compact"
+        expiresAt:
+          type: string
+          format: date-time
+          description: When the payment window closes
+          example: "2026-05-02T12:15:00Z"
+
+    SubscriptionOrderStatus:
+      type: object
+      additionalProperties: false
+      required:
+        [
+          orderId,
+          plan,
+          billingPeriod,
+          amount,
+          currency,
+          status,
+          referenceCode,
+          createdAt,
+          paymentExpiresAt,
+        ]
+      properties:
+        orderId:
+          type: integer
+          format: uint64
+          readOnly: true
+          example: 42
+        plan:
+          $ref: "#/components/schemas/SubscriptionPlan"
+        billingPeriod:
+          type: string
+          enum:
+            - monthly
+            - yearly
+          example: monthly
+        amount:
+          type: number
+          format: double
+          example: 99000.00
+        currency:
+          type: string
+          example: VND
+        status:
+          type: string
+          enum:
+            - pending
+            - paid
+            - expired
+            - cancelled
+          example: pending
+        referenceCode:
+          type: string
+          example: FIA1234567890123456789
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+          example: "2026-05-02T12:00:00Z"
+        paymentExpiresAt:
+          type: string
+          format: date-time
+          example: "2026-05-02T12:15:00Z"
+        subExpiresAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: When the granted subscription period ends. Non-null only when
+            status is paid.
+          example: "2026-06-02T12:00:00Z"
+
+    SePayWebhookPayload:
+      type: object
+      additionalProperties: true
+      description: |
+        Raw payload sent by SePay on each detected transaction.
+        Only `content` (the bank transfer memo) and `id` (SePay transaction ID) are required.
+      required: [ id, content ]
+      properties:
+        id:
+          type: integer
+          description: SePay internal transaction ID
+          example: 987654
+        content:
+          type: string
+          description: Bank transfer memo — must contain the reference_code
+          example: FIA1234567890123456789
+        transferAmount:
+          type: number
+          description: Transfer amount in the account currency
+          example: 99000
+        transferType:
+          type: string
+          description: in or out
+          example: in

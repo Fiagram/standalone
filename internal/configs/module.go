@@ -19,5 +19,6 @@ var Module = fx.Module(
 		GetConfigGrpcClient,
 		GetConfigGrpcClientStrategy,
 		GetConfigStrategy,
+		GetConfigSePay,
 	),
 )

@@ -19,6 +19,8 @@ var Module = fx.Module(
 		dao_database.NewAccountRoleAccessor,
 		dao_database.NewAccountSubscriptionAccessor,
 		dao_database.NewChatbotWebhookAccessor,
+		dao_database.NewSubscriptionPlanAccessor,
+		dao_database.NewSubscriptionOrderAccessor,
 
 		dao_cache.NewDaoCache,
 		dao_cache.NewDaoCacheUsernamesTaken,

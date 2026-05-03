@@ -90,6 +90,42 @@ func (e Price) Valid() bool {
 	}
 }
 
+// Defines values for PurchaseSubscriptionRequestBillingPeriod.
+const (
+	PurchaseSubscriptionRequestBillingPeriodMonthly PurchaseSubscriptionRequestBillingPeriod = "monthly"
+	PurchaseSubscriptionRequestBillingPeriodYearly  PurchaseSubscriptionRequestBillingPeriod = "yearly"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseSubscriptionRequestBillingPeriod enum.
+func (e PurchaseSubscriptionRequestBillingPeriod) Valid() bool {
+	switch e {
+	case PurchaseSubscriptionRequestBillingPeriodMonthly:
+		return true
+	case PurchaseSubscriptionRequestBillingPeriodYearly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PurchaseSubscriptionRequestPlan.
+const (
+	PurchaseSubscriptionRequestPlanMax PurchaseSubscriptionRequestPlan = "max"
+	PurchaseSubscriptionRequestPlanPro PurchaseSubscriptionRequestPlan = "pro"
+)
+
+// Valid indicates whether the value is a known member of the PurchaseSubscriptionRequestPlan enum.
+func (e PurchaseSubscriptionRequestPlan) Valid() bool {
+	switch e {
+	case PurchaseSubscriptionRequestPlanMax:
+		return true
+	case PurchaseSubscriptionRequestPlanPro:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RelativeStrengthIndex.
 const (
 	Rsi RelativeStrengthIndex = "rsi"
@@ -144,6 +180,126 @@ func (e SimpleMovingAverage) Valid() bool {
 	case Sma200:
 		return true
 	case Sma50:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionBillingPeriod.
+const (
+	SubscriptionBillingPeriodFree    SubscriptionBillingPeriod = "free"
+	SubscriptionBillingPeriodMonthly SubscriptionBillingPeriod = "monthly"
+	SubscriptionBillingPeriodYearly  SubscriptionBillingPeriod = "yearly"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionBillingPeriod enum.
+func (e SubscriptionBillingPeriod) Valid() bool {
+	switch e {
+	case SubscriptionBillingPeriodFree:
+		return true
+	case SubscriptionBillingPeriodMonthly:
+		return true
+	case SubscriptionBillingPeriodYearly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionOrderStatusBillingPeriod.
+const (
+	SubscriptionOrderStatusBillingPeriodMonthly SubscriptionOrderStatusBillingPeriod = "monthly"
+	SubscriptionOrderStatusBillingPeriodYearly  SubscriptionOrderStatusBillingPeriod = "yearly"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionOrderStatusBillingPeriod enum.
+func (e SubscriptionOrderStatusBillingPeriod) Valid() bool {
+	switch e {
+	case SubscriptionOrderStatusBillingPeriodMonthly:
+		return true
+	case SubscriptionOrderStatusBillingPeriodYearly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionOrderStatusStatus.
+const (
+	Cancelled SubscriptionOrderStatusStatus = "cancelled"
+	Expired   SubscriptionOrderStatusStatus = "expired"
+	Paid      SubscriptionOrderStatusStatus = "paid"
+	Pending   SubscriptionOrderStatusStatus = "pending"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionOrderStatusStatus enum.
+func (e SubscriptionOrderStatusStatus) Valid() bool {
+	switch e {
+	case Cancelled:
+		return true
+	case Expired:
+		return true
+	case Paid:
+		return true
+	case Pending:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionPlan.
+const (
+	SubscriptionPlanFree SubscriptionPlan = "free"
+	SubscriptionPlanMax  SubscriptionPlan = "max"
+	SubscriptionPlanPro  SubscriptionPlan = "pro"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionPlan enum.
+func (e SubscriptionPlan) Valid() bool {
+	switch e {
+	case SubscriptionPlanFree:
+		return true
+	case SubscriptionPlanMax:
+		return true
+	case SubscriptionPlanPro:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionPlanInfoBillingPeriod.
+const (
+	SubscriptionPlanInfoBillingPeriodMonthly SubscriptionPlanInfoBillingPeriod = "monthly"
+	SubscriptionPlanInfoBillingPeriodYearly  SubscriptionPlanInfoBillingPeriod = "yearly"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionPlanInfoBillingPeriod enum.
+func (e SubscriptionPlanInfoBillingPeriod) Valid() bool {
+	switch e {
+	case SubscriptionPlanInfoBillingPeriodMonthly:
+		return true
+	case SubscriptionPlanInfoBillingPeriodYearly:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SubscriptionStatusStatus.
+const (
+	Active   SubscriptionStatusStatus = "active"
+	Inactive SubscriptionStatusStatus = "inactive"
+)
+
+// Valid indicates whether the value is a known member of the SubscriptionStatusStatus enum.
+func (e SubscriptionStatusStatus) Valid() bool {
+	switch e {
+	case Active:
+		return true
+	case Inactive:
 		return true
 	default:
 		return false
@@ -319,6 +475,36 @@ type ProfileMeResponse struct {
 	Account Account `json:"account"`
 }
 
+// PurchaseSubscriptionRequest defines model for PurchaseSubscriptionRequest.
+type PurchaseSubscriptionRequest struct {
+	BillingPeriod PurchaseSubscriptionRequestBillingPeriod `json:"billingPeriod"`
+	Plan          PurchaseSubscriptionRequestPlan          `json:"plan"`
+}
+
+// PurchaseSubscriptionRequestBillingPeriod defines model for PurchaseSubscriptionRequest.BillingPeriod.
+type PurchaseSubscriptionRequestBillingPeriod string
+
+// PurchaseSubscriptionRequestPlan defines model for PurchaseSubscriptionRequest.Plan.
+type PurchaseSubscriptionRequestPlan string
+
+// PurchaseSubscriptionResponse defines model for PurchaseSubscriptionResponse.
+type PurchaseSubscriptionResponse struct {
+	AccountNumber string  `json:"accountNumber"`
+	Amount        float64 `json:"amount"`
+	BankCode      string  `json:"bankCode"`
+	Currency      string  `json:"currency"`
+
+	// ExpiresAt When the payment window closes
+	ExpiresAt time.Time `json:"expiresAt"`
+	OrderId   *uint64   `json:"orderId,omitempty"`
+
+	// QrCodeUrl SePay QR code image URL; scan to initiate bank transfer
+	QrCodeUrl string `json:"qrCodeUrl"`
+
+	// ReferenceCode Payment memo to include in the bank transfer
+	ReferenceCode string `json:"referenceCode"`
+}
+
 // RefreshResponse defines model for RefreshResponse.
 type RefreshResponse struct {
 	AccessToken AccessTokenResponse `json:"accessToken"`
@@ -329,6 +515,23 @@ type RelativeStrengthIndex string
 
 // Role defines model for Role.
 type Role string
+
+// SePayWebhookPayload Raw payload sent by SePay on each detected transaction.
+// Only `content` (the bank transfer memo) and `id` (SePay transaction ID) are required.
+type SePayWebhookPayload struct {
+	// Content Bank transfer memo — must contain the reference_code
+	Content string `json:"content"`
+
+	// Id SePay internal transaction ID
+	Id int `json:"id"`
+
+	// TransferAmount Transfer amount in the account currency
+	TransferAmount *float32 `json:"transferAmount,omitempty"`
+
+	// TransferType in or out
+	TransferType         *string                `json:"transferType,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
 
 // SigninRequest defines model for SigninRequest.
 type SigninRequest struct {
@@ -368,6 +571,58 @@ type SignupResponse struct {
 
 // SimpleMovingAverage defines model for SimpleMovingAverage.
 type SimpleMovingAverage string
+
+// SubscriptionBillingPeriod defines model for SubscriptionBillingPeriod.
+type SubscriptionBillingPeriod string
+
+// SubscriptionOrderStatus defines model for SubscriptionOrderStatus.
+type SubscriptionOrderStatus struct {
+	Amount           float64                              `json:"amount"`
+	BillingPeriod    SubscriptionOrderStatusBillingPeriod `json:"billingPeriod"`
+	CreatedAt        *time.Time                           `json:"createdAt,omitempty"`
+	Currency         string                               `json:"currency"`
+	OrderId          *uint64                              `json:"orderId,omitempty"`
+	PaymentExpiresAt time.Time                            `json:"paymentExpiresAt"`
+	Plan             SubscriptionPlan                     `json:"plan"`
+	ReferenceCode    string                               `json:"referenceCode"`
+	Status           SubscriptionOrderStatusStatus        `json:"status"`
+
+	// SubExpiresAt When the granted subscription period ends. Non-null only when status is paid.
+	SubExpiresAt *time.Time `json:"subExpiresAt,omitempty"`
+}
+
+// SubscriptionOrderStatusBillingPeriod defines model for SubscriptionOrderStatus.BillingPeriod.
+type SubscriptionOrderStatusBillingPeriod string
+
+// SubscriptionOrderStatusStatus defines model for SubscriptionOrderStatus.Status.
+type SubscriptionOrderStatusStatus string
+
+// SubscriptionPlan defines model for SubscriptionPlan.
+type SubscriptionPlan string
+
+// SubscriptionPlanInfo defines model for SubscriptionPlanInfo.
+type SubscriptionPlanInfo struct {
+	BillingPeriod SubscriptionPlanInfoBillingPeriod `json:"billingPeriod"`
+	Currency      string                            `json:"currency"`
+	Plan          SubscriptionPlan                  `json:"plan"`
+	Price         float64                           `json:"price"`
+}
+
+// SubscriptionPlanInfoBillingPeriod defines model for SubscriptionPlanInfo.BillingPeriod.
+type SubscriptionPlanInfoBillingPeriod string
+
+// SubscriptionStatus defines model for SubscriptionStatus.
+type SubscriptionStatus struct {
+	BillingPeriod SubscriptionBillingPeriod `json:"billingPeriod"`
+
+	// ExpiresAt When the current paid plan expires. Null for free plan.
+	ExpiresAt *time.Time               `json:"expiresAt,omitempty"`
+	Plan      SubscriptionPlan         `json:"plan"`
+	Status    SubscriptionStatusStatus `json:"status"`
+}
+
+// SubscriptionStatusStatus defines model for SubscriptionStatus.Status.
+type SubscriptionStatusStatus string
 
 // Timeframe defines model for Timeframe.
 type Timeframe string
@@ -419,6 +674,9 @@ type Limit = int
 
 // Offset defines model for Offset.
 type Offset = int
+
+// OrderId defines model for OrderId.
+type OrderId = uint64
 
 // WebhookId defines model for WebhookId.
 type WebhookId = uint64
@@ -477,6 +735,9 @@ type UpdateProfileMeJSONRequestBody = UpdateProfileMeRequest
 // UpdateProfilePasswordJSONRequestBody defines body for UpdateProfilePassword for application/json ContentType.
 type UpdateProfilePasswordJSONRequestBody = UpdatePasswordRequest
 
+// PurchaseSubscriptionJSONRequestBody defines body for PurchaseSubscription for application/json ContentType.
+type PurchaseSubscriptionJSONRequestBody = PurchaseSubscriptionRequest
+
 // CreateProfileWebhookJSONRequestBody defines body for CreateProfileWebhook for application/json ContentType.
 type CreateProfileWebhookJSONRequestBody = Webhook
 
@@ -488,6 +749,118 @@ type CreateStrategyAlertJSONRequestBody = Alert
 
 // UpdateStrategyAlertJSONRequestBody defines body for UpdateStrategyAlert for application/json ContentType.
 type UpdateStrategyAlertJSONRequestBody = Alert
+
+// SePayWebhookJSONRequestBody defines body for SePayWebhook for application/json ContentType.
+type SePayWebhookJSONRequestBody = SePayWebhookPayload
+
+// Getter for additional properties for SePayWebhookPayload. Returns the specified
+// element and whether it was found
+func (a SePayWebhookPayload) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for SePayWebhookPayload
+func (a *SePayWebhookPayload) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for SePayWebhookPayload to handle AdditionalProperties
+func (a *SePayWebhookPayload) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["content"]; found {
+		err = json.Unmarshal(raw, &a.Content)
+		if err != nil {
+			return fmt.Errorf("error reading 'content': %w", err)
+		}
+		delete(object, "content")
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &a.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+		delete(object, "id")
+	}
+
+	if raw, found := object["transferAmount"]; found {
+		err = json.Unmarshal(raw, &a.TransferAmount)
+		if err != nil {
+			return fmt.Errorf("error reading 'transferAmount': %w", err)
+		}
+		delete(object, "transferAmount")
+	}
+
+	if raw, found := object["transferType"]; found {
+		err = json.Unmarshal(raw, &a.TransferType)
+		if err != nil {
+			return fmt.Errorf("error reading 'transferType': %w", err)
+		}
+		delete(object, "transferType")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for SePayWebhookPayload to handle AdditionalProperties
+func (a SePayWebhookPayload) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["content"], err = json.Marshal(a.Content)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'content': %w", err)
+	}
+
+	object["id"], err = json.Marshal(a.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	if a.TransferAmount != nil {
+		object["transferAmount"], err = json.Marshal(a.TransferAmount)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'transferAmount': %w", err)
+		}
+	}
+
+	if a.TransferType != nil {
+		object["transferType"], err = json.Marshal(a.TransferType)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'transferType': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
 
 // AsOperandBasedOnPrice returns the union data inside the Alert_Operand1 as a OperandBasedOnPrice
 func (t Alert_Operand1) AsOperandBasedOnPrice() (OperandBasedOnPrice, error) {
@@ -812,6 +1185,18 @@ type ServerInterface interface {
 	// Update current account password
 	// (PUT /profile/me/password)
 	UpdateProfilePassword(c *gin.Context)
+	// Get current subscription status
+	// (GET /profile/subscription)
+	GetProfileSubscription(c *gin.Context)
+	// Get subscription order status
+	// (GET /profile/subscription/orders/{orderId})
+	GetSubscriptionOrder(c *gin.Context, orderId OrderId)
+	// List available subscription plans and prices
+	// (GET /profile/subscription/plans)
+	GetProfileSubscriptionPlans(c *gin.Context)
+	// Initiate a subscription plan purchase
+	// (POST /profile/subscription/purchase)
+	PurchaseSubscription(c *gin.Context)
 	// List the account's webhooks
 	// (GET /profile/webhooks)
 	GetProfileWebhooks(c *gin.Context, params GetProfileWebhooksParams)
@@ -842,6 +1227,9 @@ type ServerInterface interface {
 	// Update a trading alert
 	// (PUT /strategy/alerts/{alertId})
 	UpdateStrategyAlert(c *gin.Context, alertId AlertId)
+	// SePay payment confirmation webhook
+	// (POST /webhooks/payment/sepay)
+	SePayWebhook(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -952,6 +1340,77 @@ func (siw *ServerInterfaceWrapper) UpdateProfilePassword(c *gin.Context) {
 	}
 
 	siw.Handler.UpdateProfilePassword(c)
+}
+
+// GetProfileSubscription operation middleware
+func (siw *ServerInterfaceWrapper) GetProfileSubscription(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetProfileSubscription(c)
+}
+
+// GetSubscriptionOrder operation middleware
+func (siw *ServerInterfaceWrapper) GetSubscriptionOrder(c *gin.Context) {
+
+	var err error
+
+	// ------------- Path parameter "orderId" -------------
+	var orderId OrderId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "orderId", c.Param("orderId"), &orderId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "integer", Format: "uint64"})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter orderId: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetSubscriptionOrder(c, orderId)
+}
+
+// GetProfileSubscriptionPlans operation middleware
+func (siw *ServerInterfaceWrapper) GetProfileSubscriptionPlans(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.GetProfileSubscriptionPlans(c)
+}
+
+// PurchaseSubscription operation middleware
+func (siw *ServerInterfaceWrapper) PurchaseSubscription(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.PurchaseSubscription(c)
 }
 
 // GetProfileWebhooks operation middleware
@@ -1212,6 +1671,19 @@ func (siw *ServerInterfaceWrapper) UpdateStrategyAlert(c *gin.Context) {
 	siw.Handler.UpdateStrategyAlert(c, alertId)
 }
 
+// SePayWebhook operation middleware
+func (siw *ServerInterfaceWrapper) SePayWebhook(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SePayWebhook(c)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -1246,6 +1718,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.GET(options.BaseURL+"/profile/me", wrapper.GetProfileMe)
 	router.PUT(options.BaseURL+"/profile/me", wrapper.UpdateProfileMe)
 	router.PUT(options.BaseURL+"/profile/me/password", wrapper.UpdateProfilePassword)
+	router.GET(options.BaseURL+"/profile/subscription", wrapper.GetProfileSubscription)
+	router.GET(options.BaseURL+"/profile/subscription/orders/:orderId", wrapper.GetSubscriptionOrder)
+	router.GET(options.BaseURL+"/profile/subscription/plans", wrapper.GetProfileSubscriptionPlans)
+	router.POST(options.BaseURL+"/profile/subscription/purchase", wrapper.PurchaseSubscription)
 	router.GET(options.BaseURL+"/profile/webhooks", wrapper.GetProfileWebhooks)
 	router.POST(options.BaseURL+"/profile/webhooks", wrapper.CreateProfileWebhook)
 	router.DELETE(options.BaseURL+"/profile/webhooks/:webhookId", wrapper.DeleteProfileWebhook)
@@ -1256,4 +1732,5 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.DELETE(options.BaseURL+"/strategy/alerts/:alertId", wrapper.DeleteStrategyAlert)
 	router.GET(options.BaseURL+"/strategy/alerts/:alertId", wrapper.GetStrategyAlert)
 	router.PUT(options.BaseURL+"/strategy/alerts/:alertId", wrapper.UpdateStrategyAlert)
+	router.POST(options.BaseURL+"/webhooks/payment/sepay", wrapper.SePayWebhook)
 }

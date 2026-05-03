@@ -60,3 +60,10 @@ cache_client:
   port: 6379
   username:
   password:
+
+sepay:
+  api_key: "test_sepay_api_key"
+  account_number: "test_bank_account_number"
+  bank_code: "MB"
+  webhook_secret: "test_webhook_secret"
+  payment_expiry: 15m
